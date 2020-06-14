@@ -3,31 +3,6 @@
 #define type_HASH_SIZE 128
 //typedef struct type *Type;
 static Symbol pointersym;
-//struct type {
-//	int op;
-//	Type type;
-//	int size;
-//	int align;
-//	union {
-//		Symbol sym;
-//		Type *functype;
-//	}u;
-//};
-//extern Type chartype;
-//extern Type inttype;
-//extern Type shorttype;
-//extern Type floattype;
-//extern Type doubletype;
-//extern Type longdoubletype;
-//extern Type longinttype;
-//extern Type signedchartype;
-//extern Type unsignedchartype;
-//extern Type unsignedinttype;
-//extern Type unsignedshorttype;
-//extern Type unsignedlongtype;
-//extern Type voidtype;
-//extern Type voidptype;
-//
 
 static struct entry {
 	struct entry*link;
@@ -40,7 +15,7 @@ void rmtype( int lev ) {
 	if (maxlevel >= lev) {
 		int i = 0;
 		maxlevel = 0;
-		for (;i <( typetable );i++) {
+		for (;i <(type_HASH_SIZE);i++) {
 			struct entry *tn, **tq = &typetable[i];
 			while (tn->type.op != NULL) {
 				if (tn->type.op == FUNCTION) {
@@ -79,7 +54,6 @@ static Type type( int op, int size, int align, Type ty, void *sym ) {
 	tm->type.align = align;
 	tm->type.size = size;
 	tm->type.u.sym = sym;
-	tm->type.type = ty;
 	//memset( &tm->type.x, 0, sizeof( tm->type.x ) );
 	tm->link = typetable[h];
 	typetable[h] = tm;
@@ -95,8 +69,8 @@ void typeInit( ) {
 	mm( shorttype, "short", INT, shortmetric );
 	mm( longinttype, "long int", INT, longmetric );
 	//mm( longdoubletype, "long double", FLOAT, doublemetric );
-	mm( unsignedchartype, "unsigned char", INT, charmetric );
-	mm( signedchartype, "signed char", INT, charmetric );
+	mm( unsignedchartype, "unsigned char", UNSIGNEDCHAR, charmetric );
+	mm( signedchartype, "signed char", CHAR, charmetric );
 	mm( unsignedinttype, "unsigned int", UNSIGNED, intmetric );
 	mm( unsignedshorttype, "unsigned short", UNSIGNED, shortmetric );
 	mm( unsignedlongtype, "unsigned long", UNSIGNED, longmetric );
@@ -123,11 +97,11 @@ Type deref( Type ty ) {
 		error( "type error: %s\n", "pointer expected" );
 	return isenum( ty ) ? unqual( ty )->type : ty;
 }
-Type array( Type ty, int n, int a ) {
-	assert( ty );
+Type arrayType( Type ty, int n, int a ) {
+	//assert( ty );
 	if (isfunc( ty )) {
 		error( "illegal type `array of %t'\n", ty );
-		return array( inttype, n, 0 );
+		return arrayType( inttype, n, 0 );
 	}
 	if (isarray( ty ) && ty->size == 0)
 		error( "missing array size\n" );
@@ -172,9 +146,9 @@ Type qual( int op, Type ty ) {
 	return ty;
 }
 Type func( Type ty, Type *proto ) {
-	if (ty && (isarray( ty ) || isfunc( ty )))
+	if ( (isarray( ty ) || isfunc( ty )))
 		error( "illegal return type `%t'\n", ty );
-	ty = type( FUNCTION, ty, 0, 0, NULL );
+	ty = type( FUNCTION, 0, 0, ty, NULL );
 	ty->u.f.proto = proto;
 	//ty->u.f.oldstyle = style;
 	return ty;
@@ -320,10 +294,10 @@ Type compose( Type ty1, Type ty2 ) {
 		return qual( ty1->op, compose( ty1->type, ty2->type ) );
 	case ARRAY: { Type ty = compose( ty1->type, ty2->type );
 		if (ty1->size && (ty1->type->size && ty2->size == 0 || ty1->size == ty2->size))
-			return array( ty, ty1->size / ty1->type->size, ty1->align );
+			return arrayType( ty, ty1->size / ty1->type->size, ty1->align );
 		if (ty2->size && ty2->type->size && ty1->size == 0)
-			return array( ty, ty2->size / ty2->type->size, ty2->align );
-		return array( ty, 0, 0 );    }
+			return arrayType( ty, ty2->size / ty2->type->size, ty2->align );
+		return arrayType( ty, 0, 0 );    }
 	case FUNCTION: { Type *p1 = ty1->u.f.proto, *p2 = ty2->u.f.proto;
 		Type ty = compose( ty1->type, ty2->type );
 		List tlist = NULL;

@@ -24,22 +24,20 @@ struct ast {
 		char *idtype;
 		int intgr;
 		double dou;
-		struct ifo *i;
+		//struct ifo *i;
 		Value u;
-		
-
-	};
+		Symbol sym; //符号即存取符号表入口
+		Type ty;    //类型即存取类型		
+	};//如果是数值 constant name 需要用到这个
 	//储存变量的值 常数类型（前三项），变量类型（struct ifo*）
-	char type[15];
-	Symbol sym;
-	Type ty;
-	Coordinate info;
-	int line;
+	char name[15];//存储节点名称
+	Coordinate info; //存储节点位置
 	struct ast *l;
-	struct ast *r;
-	Node node;
-	int op;
+	struct ast *r; //是否还需要指向下一个结点的？
+	int opPr; //存储节点功能
+	int opType;//操作类型
 	//左孩子右兄弟
+	int type;//0const 1名称变量 2保留标识符 3其他
 };
 typedef struct ast* Tree;
 /* 函数根节点表 */

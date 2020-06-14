@@ -93,7 +93,6 @@ Tree newast( const char*name, int num, ... ) {
 	if (num > 0) {
 		temp = va_arg( valist, struct ast* );// 取变长参数列表中的第一个结点设为a的左孩子
 		a->l = temp;
-		a->line = temp->line;// 父节点a的行号等于左孩子的行号
 
 		if (num >= 2) // 可以规约到a的语法单元>=2
 		{
@@ -113,11 +112,10 @@ Tree newast( const char*name, int num, ... ) {
 
 		if ((!strcmp( a->type, "STRINGNUM" )))// "ID,TYPE,INTEGER，借助union保存yytext的值
 		{
-			char*t;t = (char*)malloc( sizeof( char )* sizeof(&yytext) );strcpy( t, yytext );
+			char* strinfo;
+			strinfo = (char*)malloc( sizeof( char )* sizeof(&yytext) );strcpy( t, yytext );
 			a->i->name = t;
 			string( name );
-			//strcpy( t, yytext );
-			//strcpy( a->idtype, t );
 		}
 		else if (!strcmp( a->type, "INTNUM" )) { 
 			a->sym = intconst( atoi( yytext ) );
@@ -142,7 +140,22 @@ Tree newast( const char*name, int num, ... ) {
 //	printf("a->type%s ",a->type);
 	return a;
 }
+Tree newNode( const char*name, Tree l, Tree r, int oppr, int opty, int type) {
 
+	Tree a = (Tree)malloc( sizeof( struct ast ) );// 新生成的父节点
+	if (!a )
+	{
+		yyerror( "out of space", a );
+		exit( 0 );
+	}
+	strcpy( a->type, name );
+	a->l = NULL;
+	a->r = NULL;
+	a->opPr = oppr;
+	a->opType = opty;
+	a->type = type;
+	return a;
+}
 
 /* 这只是一个打印结点信息的函数 */
 void eval_print( struct ast*a, int level ) {

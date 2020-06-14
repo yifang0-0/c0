@@ -185,27 +185,27 @@ Tree exprOPDouble( Tree oprand1, Tree oprand2, Tree op ) {
 	}
 	}
 	else if (!strcmp( op->name, "ASSIGN" )) {
-	if (oprand1->type == 1 && oprand2->type <= 1) {
-			op->r = oprand2;
-			op->l = oprand1;
-			//如果左侧是一个INDIR，删除该节点，指向其左节点
-			op->opPr = ASGN;
-			op->opType = op->l->opType;//左侧的类型是复制最终类型
-			op->type = 0;//即不能进行赋值操作
-			if (oprand1->opType != oprand2->opType) {
-				//如果需要类型转换 建立一个新节点 用来类型转换 孩子节点指向待转换值与目标值，CVXX
-			//设置该操作
-				Tree a = newNode( "TRA", op->r, NULL, CVC - 1 + op->r->opType, op->r->opType, op->r->type );
-				//将等于的右侧类型转换为左侧的，可能丢失精度，我不管了
-				op->r = a;
-			}
-		
-	}
-	else
-	{
-		yyerror( "左值不可赋值或者右值不合理\n" );
-		return NULL;
-	}
+		if (oprand1->type == 1 && oprand2->type <= 1) {
+				op->r = oprand2;
+				op->l = oprand1;
+				//如果左侧是一个INDIR，删除该节点，指向其左节点
+				op->opPr = ASGN;
+				op->opType = op->l->opType;//左侧的类型是复制最终类型
+				op->type = 0;//即不能进行赋值操作
+				if (oprand1->opType != oprand2->opType) {
+					//如果需要类型转换 建立一个新节点 用来类型转换 孩子节点指向待转换值与目标值，CVXX
+				//设置该操作
+					Tree a = newNode( "TRA", op->r, NULL, CVC - 1 + op->r->opType, op->r->opType, op->r->type );
+					//将等于的右侧类型转换为左侧的，可能丢失精度，我不管了
+					op->r = a;
+				}
+				return op;
+		}
+		else
+		{
+			yyerror( "左值不可赋值或者右值不合理\n" );
+			return NULL;
+		}
 	}
 	else if (!strcmp( op->name, "ORLEX" ) || !strcmp( op->name, "ANDLEX" )) {
 		//我得头快要从脖子上掉下来了
@@ -215,6 +215,29 @@ Tree exprOPDouble( Tree oprand1, Tree oprand2, Tree op ) {
 
 Tree getVarName( Tree name ) {
 	//如果是一个变量
+	if (name->type == 1) {
+		if (name->sym == lookup( name->idtype, identifiers )) {
+			//符号已定义
+			Tree addrl=newNode( "ADDRL", NULL, NULL, ADDRL, POINTER, 3 );
+			addrl->sym = name->sym;
+			//暂时只考虑保存位置，type信息由以上type参数保存
+			return newNode( "INDIR", addrl, NULL, INDIR, name->opType, 3 );
+		}
+	}
+	else if (name->type == 0) {
+		if (name->sym == lookup( name->idtype, constants )) {
+			//符号是常量
+		//	能找到
+			Tree addrl = newNode( "ADDRG", NULL, NULL, ADDRL, POINTER, 3 );
+			addrl->sym = name->sym;
+			//暂时只考虑保存位置，type信息由以上type参数保存
+			return newNode( "INDIR", addrl, NULL, INDIR, name->opType, 3 );
+
+		}
+	}
+	else {
+		yyerror( "未定义的变量" );
+	}
 	//去表中取偏移值
 	//指令
 		//取地址
@@ -225,6 +248,15 @@ Tree getFuncName( Tree name, Tree explist ) {
 	//建立新结点CALL
 	//CALL->l=建立空变量
 	//空变量左侧指向ARG列表
+	if (name->opPr == FUNCTION) {
+		//当前变量是函数名
+		Tree arfReturn = NULL;
+		if (name->opType != VOID) {
+			arfReturn = newNode( "POP", NULL, NULL, POP, name->type, 3 );
+		}
+		Tree nop= newNode( "nop", explist, arfReturn, CALL, name->ty, 2 );
+		Tree addrl = newNode( "CALL", NULL, NULL, CALL,name->ty, 2 );
+	}
 	
 	//CALL的时候就无脑压全部的栈再jump到标号
 
@@ -239,7 +271,7 @@ Tree getFuncName( Tree name, Tree explist ) {
 
 
 }
-Tree getArrayName( Tree name ) {
+Tree getArrayName( Tree name,Tree index ) {
 	//如果是一个变量，且是一个数组
 	//去表中取偏移值
 	//从参数中获得另一偏移量
@@ -247,6 +279,12 @@ Tree getArrayName( Tree name ) {
 		//取地址
 		//从地址+偏移量取数
 	//NAME改名addr 
+	Tree addrl = newNode( "ADDRG", name, NULL, ADDRG, name->ty->type->op, 0);//注意在声明的时候name->ty->op存的是ARRAY,name->ty->type->op存的是元素的类型
+	Tree int4 = newNode( "offset*4", index, NULL, LSH, INT, 0 );
+	Tree add = newNode( "ADD", addrl, int4, ADD, INT, 0 );
+	//暂时只考虑保存位置，type信息由以上type参数保存
+	return newNode( "INDIR", add, NULL, INDIR, name->ty->type->op, name->type );
+
 }
 Tree setArgs( Tree exp,Tree explist  ) {
 	Tree Arg = newNode("ARG",exp,explist,ARG,exp->opType, exp->type );
@@ -254,5 +292,30 @@ Tree setArgs( Tree exp,Tree explist  ) {
 }
 Tree setConstants( Tree cons ) {
 	//没有存进constants，有则通过constants中的名称在开始汇编前放入DATA段
+	if (!strcmp( cons->name, "INTNUM" )) {
+		Tree addrl = newNode( "ADDRG", cons, NULL, ADDRG, POINTER, 3 );
+		addrl->sym = intconst( cons->intgr );
+		//暂时只考虑保存位置，type信息由以上type参数保存
+		return newNode( "INDIR", addrl, NULL, INDIR, CONST, 0 );
+
+	}
+	else if(!strcmp( cons->name, "APPROXNUM" )) {
+		Tree addrl = newNode( "ADDRG", cons, NULL, ADDRG, POINTER, 3 );
+		addrl->sym = doubleconst( cons->dou );
+		//暂时只考虑保存位置，type信息由以上type参数保存
+		return newNode( "INDIR", addrl, NULL, INDIR, CONST, 0 );
+	}
+	else
+	{
+		Tree addrl = newNode( "ADDRG", cons, NULL, ADDRG,ARRAY , 0 );
+		addrl->ty = arrayType( chartype, strlen(cons->idtype), 1 );
+		addrl->ty->u.sym = string( cons->idtype );
+		cons->opType = CHAR;
+		cons->type = 0;
+		//暂时只考虑保存位置，type信息由以上type参数保存
+		return newNode( "INDIR", addrl, NULL, INDIR, ARRAY, 0 );
+		
+	}
+	
 }
 //直接在语义匹配的时候放置到constant里。在生成汇编的时候检查constant

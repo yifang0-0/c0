@@ -255,8 +255,6 @@ unsigned hash( char*name, unsigned  HASH_SHIFT, unsigned HASH_SIZE ) {
 Symbol lookup( const char *name, Table tp ) {
 	struct entry *p;
 	unsigned h = (unsigned long)name&(sym_HASH_SIZE - 1);
-
-	assert( tp );
 	do
 		for (p = tp->buckets[h]; p; p = p->link)
 			if (name == p->sym.name)

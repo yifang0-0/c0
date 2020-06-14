@@ -26,11 +26,23 @@
 #include "limits.h"
 enum { PERM = 0, FUNC, STMT };
 enum {
-	CHAR = 1, INT, UNSIGNED, SHORT,
-	LONG, ENUM, FLOAT, DOUBLE,
-	ARRAY, STRUCT, UNION, POINTER,
-	FUNCTION, CONST, VOLATILE, VOID
-};
+	CHAR = 1, UNSIGNEDCHAR,INT,UNSIGNED, FLOAT,
+	ARRAY, FUNCTION, POINTER, VOID, 
+	STRUCT, UNION, ENUM ,FUNCTION, CONST,
+	SHORT, LONG, VOLATILE, DOUBLE
+};//类型修饰符
+
+enum {
+	ADDRF=1,ADDRG,ADDRL,CNST,BCOM,
+	CVC,CVI, CVF, CVU,CVP,
+	INDIR,NEG,ADD,BAND,BOR,
+	BXOR,DIV,LSH,MOD,MUL,
+	RSH,SUB,ASGN,
+	EQ,GE,GT,LE,LT,NE,
+	ARG,CALL,RET,JUMP,LABEL,
+	PUSH,POP
+};//操作符
+
 enum { AUT0 = 1, REGISTER, STATIC, EXTERN };
 
 enum {
@@ -132,6 +144,8 @@ struct symbol {
 	Coordinate src;
 	Type type;
 	int sclass;
+	int ifdiv;
+	int offset;
 	union {
 		struct {
 			Value v;
@@ -165,6 +179,7 @@ typedef union value {
 	float f;
 	double d;
 	void *p;
+	int ifdiv;
 }Value;
 
 enum { CONSTANT = 1, LABLES, GLOBAL, PARAM, LOCAL };
@@ -203,22 +218,22 @@ Symbol lookup( const char *name, Table tp );
 //type
 //type typedef
 
-#define iequal(t) ((t)->op>=CONST)
+#define isqual(t) ((t)->op>=CONST)
 #define unqual(t) (isqual(t)?(t)->type:(t))
 
 #define isvolatile(t) ((t)->op==VOLATILE\
 						||(t)->op==VOLATILE+CONST)
 #define isconst(t)   ((t)->op==CONST\
 						||(t)->op==VOLATILE+CONST)
-#define isarray(t)   (unqual(t)->op==ARRAY)
-#define isstruct(t)   (unqual(t)->op==STRUCT)
-#define isunion(t)   (unqual(t)->op==UNION)
-#define isfunc(t)   (unqual(t)->op==FUNCTION)
-#define ischar(t)   (unqual(t)->op==CHAR)
-#define isint(t)   (unqual(t)->op>=CHAR&&unqual(t)->op<=UNSIGNED)
-#define isfloat(t)   (unqual(t)->op==FLOAT)
-#define isdouble(t)   (unqual(t)->op==DOUBLE)
-#define isenum(t)   (unqual(t)->op==ENUM)
+#define isarray(t)   ((t)->op==ARRAY)
+#define isstruct(t)   ((t)->op==STRUCT)
+#define isunion(t)   ((t)->op==UNION)
+#define isfunc(t)   ((t)->op==FUNCTION)
+#define ischar(t)   ((t)->op==CHAR)
+#define isint(t)   ((t)->op>=CHAR&&(t)->op<=UNSIGNED)
+#define isfloat(t)   ((t)->op==FLOAT)
+#define isdouble(t)   ((t)->op==DOUBLE)
+#define isenum(t)   ((t)->op==ENUM)
 
 extern Type chartype;
 extern Type inttype;
@@ -261,6 +276,7 @@ struct type {
 };
 //类型表只有一个
 static Type type( int op, int size, int align, Type ty, void * sym );
+Type arrayType( Type ty, int n, int a );
 /******************************String**************************/
 //string type
 

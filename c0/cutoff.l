@@ -58,7 +58,7 @@ SPACE [ \t\r]*
 "%"  {yylval.a=newast("MOD",0,yylineno);yylval.a->op=MOD;return MODLEX;}
 "," {yylval.a=newast("COMMA",0,yylineno);return COMMA;}
 "!" {yylval.a=newast("NOT",0,yylineno);yylval.a->op=NOT;return NOTLEX;}
-"&"	{yylval.a=newast("ADDRESS",0,yylineno);yylval.a->op=ADDR; return ADDRESS;}
+"&"	{yylval.a=newast("ADDRESS",0,yylineno);yylval.a->op=ADDR; return BAND;}
 "|"	{yylval.a=newast("BOR",0,yylineno);yylval.a->op=BOR; return BOR;}
 "^"	{yylval.a=newast("BXOR",0,yylineno);yylval.a->op=BXOR; return BXOR;}
 >|<|>=|<=|==|!= {yylval.a=newast("RELOP",0,yylineno); return RELOP;}

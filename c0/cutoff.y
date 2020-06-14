@@ -157,7 +157,6 @@ Exp:
         |NAME LP RP {$$=newast("Exp",3,$1,$2,$3);}
         |NAME LSB Exp RSB {$$=newast("Exp",4,$1,$2,$3,$4);}//NAME[id]
         |NAME {$$=newast("Exp",1,$1);}
-		|Args {$$=newast("Exp",1,$1);}
         |INTNUM {$$=newast("Exp",1,$1);}
         |APPROXNUM{$$=newast("Exp",1,$1);}
 		|STRINGNUM{$$=newast("Exp",1,$1);}
@@ -176,20 +175,3 @@ int main(int ac,char **av)
     yyparse();
 }
  
-
-
-/*STATEMENT*/
-/*int main(int ac,char av){ printf();yyparse();}
-Compst:LB DefList StmtList RB {$$=newast("Compst",4,$1,$2,$3,$4);}
-	;
-StmtList:Stmt StmtList{$$=newast("StmtList",2,$1,$2);}
-	| {$$=newast("StmtList",0,-1);}
-	;
-Stmt:Exp SEMI {$$=newast("Stmt",2,$1,$2);}
-	|Compst {$$=newast("Stmt",1,$1);}
-	|RETURN Exp SEMI {$$=newast("Stmt",3,$1,$2,$3);}
-	|IF LP Exp RP Stmt {$$=newast("Stmt",5,$1,$2,$3,$4,$5);}
-	|IF LP Exp RP Stmt ELSE Stmt {$$=newast("Stmt",7,$1,$2,$3,$4,$5,$6,$7);}
-	|WHILE LP Exp RP Stmt {$$=newast("Stmt",5,$1,$2,$3,$4,$5);}
-	;
-*/
