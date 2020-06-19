@@ -24,8 +24,10 @@
     <ClCompile Include="cutoff_ast.c" />
     <ClCompile Include="dag.c" />
     <ClCompile Include="func.c" />
+    <ClCompile Include="generate.c" />
     <ClCompile Include="lex.yy.c" />
     <ClCompile Include="list.c" />
+    <ClCompile Include="statement.c" />
     <ClCompile Include="string.c" />
     <ClCompile Include="types.c" />
     <ClCompile Include="sym.c" />

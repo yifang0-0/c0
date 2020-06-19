@@ -27,6 +27,8 @@
     <ClCompile Include="exp.c" />
     <ClCompile Include="decl.c" />
     <ClCompile Include="statements.c" />
+    <ClCompile Include="generate.c" />
+    <ClCompile Include="statement.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="func.h">

@@ -35,14 +35,13 @@ void rmtype( int lev ) {
 }
 
 
-static Type type( int op, int size, int align, Type ty, void *sym ) {
+static Type type( int op, Type ty,int size,void *sym ) {
 	unsigned h = (op ^ ((unsigned)ty) >> 3)&(type_HASH_SIZE - 1);
 	struct entry *tm;
 	if (op != FUNCTION && (op != ARRAY || size > 0)) {
 		for (tm = typetable[h];tm;tm = tm->link) {
 			if (tm->type.type == ty &&
 				 tm->type.op == op &&
-				 tm->type.align == align &&
 				 tm->type.size == size &&
 				 tm->type.u.sym == sym
 				 )
@@ -51,7 +50,6 @@ static Type type( int op, int size, int align, Type ty, void *sym ) {
 	}
 	tm->type.type = ty;
 	tm->type.op = op;
-	tm->type.align = align;
 	tm->type.size = size;
 	tm->type.u.sym = sym;
 	//memset( &tm->type.x, 0, sizeof( tm->type.x ) );
@@ -61,25 +59,25 @@ static Type type( int op, int size, int align, Type ty, void *sym ) {
 }
 
 void typeInit( ) {
-#define mm(v,name,op,metrics) {Symbol p=install(string(name ),&types,GLOBAL,PERM );v=type(op,0,IR->metrics.size,IR->metrics.align,p);p->type=v;p->addressed=IR->metrics.outofline;}
-	mm( chartype, "char", INT, charmetric );
-	mm( inttype, "int", INT, intmetric );
-	mm( floattype, "float", FLOAT, floatmetric );
-	mm( doubletype, "double", FLOAT, doublemetric );
-	mm( shorttype, "short", INT, shortmetric );
-	mm( longinttype, "long int", INT, longmetric );
+#define mm(v,name,op,size) {Symbol p=install(string(name ),&types,GLOBAL,PERM );v=type(op,0,size,p);p->type=v;}
+	mm( chartype, "char", CHAR, 1 );
+	mm( inttype, "int", INT, 4 );
+	mm( floattype, "float", FLOAT, 4 );
+	mm( doubletype, "double", FLOAT, 8 );
+	//mm( shorttype, "short", INT, shortmetric );
+	//mm( longinttype, "long int", INT, longmetric );
 	//mm( longdoubletype, "long double", FLOAT, doublemetric );
-	mm( unsignedchartype, "unsigned char", UNSIGNEDCHAR, charmetric );
-	mm( signedchartype, "signed char", CHAR, charmetric );
-	mm( unsignedinttype, "unsigned int", UNSIGNED, intmetric );
-	mm( unsignedshorttype, "unsigned short", UNSIGNED, shortmetric );
-	mm( unsignedlongtype, "unsigned long", UNSIGNED, longmetric );
+	mm( unsignedchartype, "unsigned char", UNSIGNEDCHAR, 1 );
+	//mm( signedchartype, "signed char", CHAR, charmetric );
+	mm( unsignedinttype, "unsigned int", UNSIGNED, 4 );
+	//mm( unsignedshorttype, "unsigned short", UNSIGNED, shortmetric );
+	//mm( unsignedlongtype, "unsigned long", UNSIGNED, longmetric );
 	
 #undef mm	
 
 	Symbol p;
 	p = install( string( "void" ), &types, GLOBAL, PERM );
-	voidtype = type( VOID, NULL, 0, 0, p );
+	voidtype = type( VOID, NULL, 4,  p );
 	p->type = voidtype;
 
 	pointersym= install( string( "T*" ), &types, GLOBAL, PERM );
@@ -87,7 +85,7 @@ void typeInit( ) {
 }
 
 Type PRT( Type TY ) {
-	return type( POINTER, TY, IR->ptrmetric.size, IR->ptrmetric.align, pointersym );
+	return type( POINTER, TY, IR->ptrmetric.size,pointersym );
 }
 
 Type deref( Type ty ) {
@@ -97,7 +95,7 @@ Type deref( Type ty ) {
 		error( "type error: %s\n", "pointer expected" );
 	return isenum( ty ) ? unqual( ty )->type : ty;
 }
-Type arrayType( Type ty, int n, int a ) {
+Type arrayType( Type ty, int n ) {
 	//assert( ty );
 	if (isfunc( ty )) {
 		error( "illegal type `array of %t'\n", ty );
@@ -118,7 +116,7 @@ Type arrayType( Type ty, int n, int a ) {
 		n = 1;
 	}
 	return type( ARRAY, ty, n*ty->size,
-				 a ? a : ty->align, NULL );
+				  NULL );
 }
 
 Type atop( Type ty ) {
@@ -130,7 +128,7 @@ Type atop( Type ty ) {
 Type qual( int op, Type ty ) {
 	if (isarray( ty ))
 		ty = type( ARRAY, qual( op, ty->type ), ty->size,
-				   ty->align, NULL );
+				    NULL );
 	else if (isfunc( ty ))
 		warning( "qualified function type ignored\n" );
 	else if (isconst( ty ) && op == CONST
@@ -141,7 +139,7 @@ Type qual( int op, Type ty ) {
 			op += ty->op;
 			ty = ty->type;
 		}
-		ty = type( op, ty, ty->size, ty->align, NULL );
+		ty = type( op, ty, ty->size, NULL );
 	}
 	return ty;
 }
@@ -279,6 +277,42 @@ Type promote( Type ty ) {
 	}
 	return ty;
 }
+Type canOperate( Type ty1, Type ty2 ) {//判断ty2是否可以转换为ty1
+	if (ty1 == ty2)
+		return ty1;
+
+	switch (ty1->op) {
+	case POINTER:
+		return compose( ty1->type, ty2->type );
+	case ARRAY: { Type ty = compose( ty1->type, ty2->type );
+		if (ty1->size && (ty1->type->size && ty2->size == 0 || ty1->size == ty2->size))
+			return arrayType( ty, ty1->size / ty1->type->size, 1 );
+		if (ty2->size && ty2->type->size && ty1->size == 0)
+			return arrayType( ty, ty2->size / ty2->type->size, 1);
+		return arrayType( ty, 0, 0 );    }
+	case FUNCTION: { Type *p1 = ty1->u.f.proto, *p2 = ty2->u.f.proto;
+		Type ty = compose( ty1->type, ty2->type );
+		List tlist = NULL;
+		if (p1 == NULL && p2 == NULL)
+			return func( ty, NULL, 1 );
+		if (p1 && p2 == NULL)
+			return func( ty, p1 );
+		if (p2 && p1 == NULL)
+			return func( ty, p2 );
+		for (; *p1 && *p2; p1++, p2++) {
+			Type ty = compose( unqual( *p1 ), unqual( *p2 ) );
+			if (isconst( *p1 ) || isconst( *p2 ))
+				ty = qual( CONST, ty );
+			if (isvolatile( *p1 ) || isvolatile( *p2 ))
+				ty = qual( VOLATILE, ty );
+			tlist = append( ty, tlist );
+		}
+		//assert( *p1 == NULL && *p2 == NULL );
+		return func( ty, ltov( &tlist, PERM ), 0 ); }
+	}
+	//assert( 0 ); 
+	return NULL;
+}
 //检查类型是否兼容
 Type compose( Type ty1, Type ty2 ) {
 	if (ty1 == ty2)
@@ -294,9 +328,9 @@ Type compose( Type ty1, Type ty2 ) {
 		return qual( ty1->op, compose( ty1->type, ty2->type ) );
 	case ARRAY: { Type ty = compose( ty1->type, ty2->type );
 		if (ty1->size && (ty1->type->size && ty2->size == 0 || ty1->size == ty2->size))
-			return arrayType( ty, ty1->size / ty1->type->size, ty1->align );
+			return arrayType( ty, ty1->size / ty1->type->size);
 		if (ty2->size && ty2->type->size && ty1->size == 0)
-			return arrayType( ty, ty2->size / ty2->type->size, ty2->align );
+			return arrayType( ty, ty2->size / ty2->type->size );
 		return arrayType( ty, 0, 0 );    }
 	case FUNCTION: { Type *p1 = ty1->u.f.proto, *p2 = ty2->u.f.proto;
 		Type ty = compose( ty1->type, ty2->type );
@@ -315,10 +349,11 @@ Type compose( Type ty1, Type ty2 ) {
 				ty = qual( VOLATILE, ty );
 			tlist = append( ty, tlist );
 		}
-		assert( *p1 == NULL && *p2 == NULL );
+		//assert( *p1 == NULL && *p2 == NULL );
 		return func( ty, ltov( &tlist, PERM ), 0 ); }
 	}
-	assert( 0 ); return NULL;
+	//assert( 0 ); 
+	return NULL;
 }
 //将类型映射为相应的类型后缀
 //
@@ -374,23 +409,3 @@ Type btot( int op, int size ) {
 #undef xx
 	assert( 0 ); return 0;
 }
-//
-//int hasproto( Type ty ) {
-//	if (ty == 0)
-//		return 1;
-//	switch (ty->op) {
-//	case CONST: case VOLATILE: case CONST + VOLATILE: case POINTER:
-//	case ARRAY:
-//		return hasproto( ty->type );
-//	case FUNCTION:
-//		return hasproto( ty->type ) && ty->u.f.proto;
-//	case STRUCT: case UNION:
-//	case VOID:   case FLOAT: case ENUM:  case INT: case UNSIGNED:
-//		return 1;
-//	}
-//	assert( 0 ); return 0;
-//}
-///* fieldlist - construct a flat list of fields in type ty */
-//Field fieldlist( Type ty ) {
-//	return ty->u.sym->u.s.flist;
-//}

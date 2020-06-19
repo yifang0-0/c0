@@ -67,15 +67,18 @@ ExtDef:
 	Specifire SEMI	{$$=newast("ExtDef",2,$1,$2);}
 	|Specifire FunDec Compst	{$$=newast("ExtDef",3,$1,$2,$3);}
 	|Specifire ExtVarList SEMI{$$=newast("ExtDef",3,$1,$2,$3);}
+	|CONST Specifire FunDec Compst	{$$=newast("ExtDef",3,$1,$2,$3);}
+	|CONST Specifire ExtVarList SEMI{$$=newast("ExtDef",3,$1,$2,$3);}
 	;
 ExtVarList:DecVar COMMA VarList {$$=newast("ExtVarList",3,$1,$2,$3);}
-	|DecVar {$$=newast("ExtVarList",1,$1);}
+	|DecVar {$$=createList("",Tree l, Tree r );}
 	|FunDec {$$=newast("ExtVarList",1,$1);}
 	;
 FunDec:NAME FunDecList {$$=newast("FunDec",2,$1,$2);}
 	;
 /*Specifire*/
 Specifire:TYPE {$$=newast("Specifire",1,$1);}
+	|UNSIGNED TYPE {$$=newast("Specifire",1,$1);
 	|StructSpecifire {$$=newast("Specifire",1,$1);}
 	|UnionSpecifire {$$=newast("Specifire",1,$1);}
 	;
@@ -101,11 +104,12 @@ STATE:
 
 /*Defination*/
 
-DefList:Def DefList  {$$=newast("DefList",2,$1,$2);}
-	|{printf("this i***********************");$$=newast("DefList",-1);}
+DefList:Def DefList  {$$=createList("DefList",$1,$2);}
+	|Def{$$=createList( "DefList",$1,NULL);}
 	;
 Def:
 Specifire VarList SEMI {$$=newast("Def",3,$1,$2,$3);}
+|CONST Specifire VarList SEMI {$$=newast("Def",3,$1,$2,$3);}
 	;
 FunDecList:LP fDecList RP {$$=newast("FunDecList",3,$1,$2,$3);}
 	|LP  RP {$$=newast("FunDecList",2,$1,$2);}
@@ -115,54 +119,55 @@ fDecVar COMMA fDecList {$$=newast("fDecList",3,$1,$2,$3);}
 | fDecVar{$$=newast("fDecList",1,$1);}
 	;
 fDecVar:Specifire Var {$$=newast("DecVarList",2,$1,$2);}
+|CONST Specifire Var {$$=newast("DecVarList",2,$1,$2);}
 	;
 
 	
 /*Declaration*/
-VarList:DecVar COMMA VarList {$$=newast("VarList",3,$1,$2,$3);}
-	|DecVar {$$=newast("VarList",1,$1);}
+VarList:DecVar COMMA VarList {$$=createList("VarList" $1,$3 );}
+	|DecVar {$$=$1;}
 	;
-DecVar: Var {$$=newast("DecVar",1,$1);}
-	|Var ASSIGN Exp{$$=newast("DecVar",2,$1,$2);}
+DecVar: Var {$$=$1;}
+	|Var ASSIGN Exp{$$=exprOPDouble( Var,Exp, ASSIGN );}
 	;
-Var: NAME {$$=newast("Var",1,$1);}
-	|Var LSB INTNUM RSB {$$=newast("Var",4,$1,$2,$3,$4);}
-	|Var LSB  RSB {$$=newast("Var",3,$1,$2,$3);}
+Var: NAME {$$=$1;}
+	|Var LSB Exp RSB {$$=createList( "Var", Var,Exp);}
+	|Var LSB  RSB {$$=createList( "Var", Var,NULL);}
 	;
 	
 Exp:
-		Exp SELFADD  {$$=newast("Exp",2,$1,$2);}
-		|Exp SELFSUB {$$=newast("Exp",2,$1,$2);}
-		|STARLEX Exp {$$=newast("Exp",2,$1,$2);}
-		|ADDRESS Exp {$$=newast("Exp",2,$1,$2);}
-		|SUBLEX Exp {$$=newast("Exp",2,$1,$2);}
-		|NOTLEX Exp {$$=newast("Exp",2,$1,$2);}
-		|SELFADD Exp {$$=newast("Exp",2,$1,$2);}
-		|SELFSUB Exp {$$=newast("Exp",2,$1,$2);}
-		|SIZEOFLEX Exp {$$=newast("Exp",2,$1,$2);}
-		|Exp STARLEX Exp{$$=newast("Exp",3,$1,$2,$3);}//*
-		|Exp DIVLEX Exp{$$=newast("Exp",3,$1,$2,$3);}//div
-		|Exp MODLEX Exp{$$=newast("Exp",3,$1,$2,$3);}
-	    |Exp ADDLEX Exp{$$=newast("Exp",3,$1,$2,$3);}//+
-        |Exp SUBLEX Exp{$$=newast("Exp",3,$1,$2,$3);}//-
-        |Exp RELOP Exp{$$=newast("Exp",3,$1,$2,$3);}
-		|Exp ADDRESS Exp{$$=newast("Exp",3,$1,$2,$3);}//按位与
-		|Exp BXOR Exp{$$=newast("Exp",3,$1,$2,$3);}
-		|Exp BOR Exp{$$=newast("Exp",3,$1,$2,$3);}
-    	|Exp ANDLEX Exp{$$=newast("Exp",3,$1,$2,$3);}
-		|Exp ORLEX Exp{$$=newast("Exp",3,$1,$2,$3);}
-		|Exp ASSIGN Exp{$$=newast("Exp",3,$1,$2,$3);}
-        |LP Exp RP{$$=newast("Exp",3,$1,$2,$3);}
-        |NAME LP Args RP {$$=newast("Exp",4,$1,$2,$3,$4);}
-        |NAME LP RP {$$=newast("Exp",3,$1,$2,$3);}
-        |NAME LSB Exp RSB {$$=newast("Exp",4,$1,$2,$3,$4);}//NAME[id]
-        |NAME {$$=newast("Exp",1,$1);}
-        |INTNUM {$$=newast("Exp",1,$1);}
-        |APPROXNUM{$$=newast("Exp",1,$1);}
-		|STRINGNUM{$$=newast("Exp",1,$1);}
+		Exp SELFADD  {$$=exprOPSingle($2,$1);}
+		|Exp SELFSUB {$$=exprOPSingle($2,$1);}
+		|STARLEX Exp {$$=exprOPSingle($1,$2);}
+		|ADDRESS Exp {$$=exprOPSingle($1,$2);}
+		|SUBLEX Exp {$$=exprOPSingle($1,$2);}
+		|NOTLEX Exp {$$=exprOPSingle($1,$2);}
+		|SELFADD Exp {$$=exprOPSingle($1,$2);}
+		|SELFSUB Exp {$$=exprOPSingle($1,$2);}
+		|SIZEOFLEX Exp {$$=exprOPSingle($1,$2);}
+		|Exp STARLEX Exp{$$=exprOPDouble($1,$3,$2);}//*
+		|Exp DIVLEX Exp{$$=exprOPDouble($1,$3,$2);}//div
+		|Exp MODLEX Exp{$$=exprOPDouble($1,$3,$2);}
+	    |Exp ADDLEX Exp{$$=exprOPDouble($1,$3,$2);}//+
+        |Exp SUBLEX Exp{$$=exprOPDouble($1,$3,$2);}//-
+        |Exp RELOP Exp{$$=exprOPDouble($1,$3,$2);}
+		|Exp ADDRESS Exp{$$=exprOPDouble($1,$3,$2);}//按位与
+		|Exp BXOR Exp{$$=exprOPDouble($1,$3,$2);}
+		|Exp BOR Exp{$$=exprOPDouble($1,$3,$2);}
+    	|Exp ANDLEX Exp{$$=exprOPDouble($1,$3,$2);}
+		|Exp ORLEX Exp{$$=exprOPDouble($1,$3,$2);}
+		|Exp ASSIGN Exp{$$=exprOPDouble($1,$3,$2);}
+        |LP Exp RP{$$=$2;}
+        |NAME LP Args RP {$$=getFuncName($1,$3);}
+        |NAME LP RP {$$=getArrayName($1,NULL);}
+        |NAME LSB Exp RSB {$$=getArrayName($1,$3);}//NAME[id]
+        |NAME {$$=getVarName($1)}
+        |INTNUM {$$=setContants($1);}
+        |APPROXNUM{$$=setContants($1);}
+		|STRINGNUM{$$=setContants($1);}
         ;
-Args:Exp COMMA Args {$$=exprCOMMA(newast("Args",3,$1,$2,$3)) }
-        |Exp {$$=newast("Args",1,$1);}//一个的时候不生成right结点
+Args:Exp COMMA Args {$$=setArgs($1,$3); }
+        |Exp {$$=setArgs($1,NULL);}//一个的时候不生成right结点
         ;
 %%
  

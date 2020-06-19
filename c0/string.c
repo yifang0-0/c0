@@ -3,21 +3,13 @@
 #include "dataStructure.h"
 #define STR_HASH_SIZE 1024
 #define STR_HASH_SHIFT 2
-extern char* string ARGS( (char* str) );
-extern char* stringn ARGS( (char* str,int len) );
-extern char* stringd ARGS((int n));
+//extern char* string ARGS( (char* str) );
+//extern char* stringn ARGS( (char* str,int len) );
+//extern char* stringd ARGS((int n));
 //
-//static struct string {
-//	char *str;
-//	int len;
-//	struct string *link;
-//}*buckets[1024];
 
-static struct string {
-	char *str;
-	int len;
-	struct string *link;
-}*buckets[1024];
+extern struct string bucket;
+
 char* string(char* str) {
 	char *s;
 	for (s = str;*s;s++);

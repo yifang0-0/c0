@@ -110,25 +110,25 @@ Tree newast( const char*name, int num, ... ) {
 		int t = va_arg( valist, int );
 		a->line = t;
 
-		if ((!strcmp( a->type, "STRINGNUM" )))// "ID,TYPE,INTEGER，借助union保存yytext的值
+		if ((!strcmp( a->name, "STRINGNUM" )))// "ID,TYPE,INTEGER，借助union保存yytext的值
 		{
 			char* strinfo;
-			strinfo = (char*)malloc( sizeof( char )* sizeof(&yytext) );strcpy( t, yytext );
-			a->i->name = t;
-			string( name );
+			strinfo = (char*)malloc( sizeof( char )* sizeof(&yytext) );strcpy( strinfo, yytext );
+			a->sym=string( strinfo );
 		}
-		else if (!strcmp( a->type, "INTNUM" )) { 
-			a->sym = intconst( atoi( yytext ) );
+		else if (!strcmp( a->name, "INTNUM" )) { 
+			
 		}
-		else if (!strcmp( a->type, "APPROXNUM" )) {
+		else if (!strcmp( a->name, "APPROXNUM" )) {
 			a->sym = doubleconst( atof( yytext ) );
 		}
-		else if (!strcmp( a->type, "NAME" )) {
+		else if (!strcmp( a->name, "NAME" )) {
 		/*	char*t;t = (char*)malloc( sizeof( char* ) * 16 );strcpy( t, yytext );
 			a->i= (struct ifo*)malloc( sizeof( struct ifo ) );
 		    a->i->name  = t ;
 			a->i->varid = -1;*/
 			a->sym = firstInit( name );
+			a->idtype
 		}
 		else if (!strcmp( a->type, "TYPE" )) {
 			a->sym = firstInit( name );

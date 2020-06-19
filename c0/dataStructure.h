@@ -24,6 +24,7 @@ struct ast {
 		char *idtype;
 		int intgr;
 		double dou;
+		struct string *str;
 		//struct ifo *i;
 		Value u;
 		Symbol sym; //符号即存取符号表入口
@@ -37,7 +38,7 @@ struct ast {
 	int opPr; //存储节点功能
 	int opType;//操作类型
 	//左孩子右兄弟
-	int type;//0const 1名称变量 2保留标识符 3其他
+	int type;//
 };
 typedef struct ast* Tree;
 /* 函数根节点表 */

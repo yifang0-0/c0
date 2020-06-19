@@ -33,7 +33,7 @@ enum {
 };//¿‡–Õ–ﬁ Œ∑˚
 
 enum {
-	ADDRF=1,ADDRG,ADDRL,CNST,BCOM,
+	NOP=0,ADDRF=1,ADDRG,ADDRL,CNST,BCOM,
 	CVC,CVI, CVF, CVU,CVP,
 	INDIR,NEG,ADD,BAND,BOR,
 	BXOR,DIV,LSH,MOD,MUL,
@@ -281,6 +281,12 @@ Type arrayType( Type ty, int n, int a );
 //string type
 
 //string func
+
+static struct string {
+	char *str;
+	int len;
+	struct string *link;
+}*buckets[1024];
 
 char* string( char* str );
 
