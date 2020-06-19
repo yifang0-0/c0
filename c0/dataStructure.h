@@ -23,7 +23,7 @@ struct ast {
 	union {
 		char *idtype;
 		int intgr;
-		double dou;
+		float dou;
 		struct string *str;
 		//struct ifo *i;
 		Value u;
@@ -38,7 +38,7 @@ struct ast {
 	int opPr; //存储节点功能
 	int opType;//操作类型
 	//左孩子右兄弟
-	int type;//
+	int type;//0不能进行赋值操作const 1可以进行赋值操作，2是保留字符，3是其他
 };
 typedef struct ast* Tree;
 /* 函数根节点表 */

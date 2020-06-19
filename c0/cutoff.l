@@ -33,7 +33,7 @@ SPACE [ \t\r]*
 							return STRINGNUM;}
 0|-?[1-9][0-9]* { yylval.a=newast("INTNUM",0,yylineno); return INTNUM; }
 -?[0-9]+"."[0-9]* {yylval.a=newast("APPROXNUM",0,yylineno);return APPROXNUM;}
-"char"|"int"|"bool"|"double"|"string" {yylval.a=newast("TYPE",0,yylineno);return TYPELEX;}
+"char"|"int"|"bool"|"float"|"string"|"void" {yylval.a=newast("TYPE",0,yylineno);return TYPELEX;}
 "TRUE"  {yylval.a=newast("TRUE",0,yylineno);return TRUELEX;}
 "FALSE"  {yylval.a=newast("FALSE",0,yylineno);return FALSELEX;}
 

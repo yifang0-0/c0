@@ -65,18 +65,286 @@
 					sym->offset=n,n+=4(不定长度的指针)
 					return VAR
 		}
-
-
-
-
-
-					
-
+	
 		}
 				
 				
 				返回值在右侧
-
-		
-
 */
+
+/*
+这是不需要在程序之前生成的函数内定义
+*/
+void setNewSymbol( Symbol newsym, Type type ) {
+	newsym->defined = 1;
+	newsym->offset = identificaionOffset;
+	newsym->type = type;
+	newsym->size = type->size;
+}
+void okayToDec(Tree newsymbol,Tree type,Tree value,int ifconst ) {
+	Symbol newsym = install( newsymbol->name, constants, level, 1 );
+	newsym->defined = ifconst;
+	setNewSymbol( newsym, type->ty );
+	if(value!=0){
+		newsym->u.c.v = newValue( type->ty->op, value->u, value->opType );
+		newsym->defined = 1;
+	}
+	else newsym->defined = 0;
+	identificaionOffset += newsym->size;
+
+}
+Value newValue( int type, Value oldValue,int oldType )
+{
+	Value newValue;
+	if (oldType == FLOAT) {
+		switch (type) {
+		case CHAR:newValue.sc = (char)(oldValue.f);break;
+		case UNSIGNEDCHAR:newValue.uc = (char)(oldValue.f);break;
+		case INT:newValue.i = (char)(oldValue.f);break;
+		case UNSIGNED:newValue.u = (char)(oldValue.f);break;
+		case FLOAT:newValue.f = (char)(oldValue.f);break;
+		default:yyerror( "输入错误得到类型\n" );
+		}
+	}
+	else if (oldType == INT) {
+		switch (type) {
+		case CHAR:newValue.sc = (char)(oldValue.i);break;
+		case UNSIGNEDCHAR:newValue.uc = (unsigned char)(oldValue.i);break;
+		case INT:newValue.i = (int)(oldValue.i);break;
+		case UNSIGNED:newValue.u = (unsigned)(oldValue.i);break;
+		case FLOAT:newValue.f = (float)(oldValue.i);break;
+		default:yyerror( "输入错误得到类型\n" );
+		}
+	}
+}
+
+int transferAssignDecl(Tree type,Tree varList ) {
+	if (type->ty->op <= FLOAT && varList->r->opType <= FLOAT) {
+		if (type->ty->op != varList->r->opType) {
+			//转换
+			Tree a = newNode( "TRA", varList->l->r, NULL, CVC - 1 + varList->l->r->opType, varList->l->l->opType, varList->l->l->type );
+			//将等于的右侧类型转换为左侧的，可能丢失精度
+			varList->l->r = a;
+			return 1;
+		}
+
+	}
+	return 0;
+}
+
+
+Tree varDec( Tree type, Tree vl, int ifConst ) {
+	Tree varList = vl;
+	
+	if (ifConst) {//可能出现两种情况：常量或非常量
+		//varList可能出现的两种情况：varlist，var
+		while (!strcmp( varList->name, "varList" )) {
+
+			if (!strcmp( varList->l->name, "Var" )) {
+				//如果存在一个没有赋值的变量，报错
+				yyerror( "未在常量定义时赋值\n" );
+			}
+			else if (!strcmp( varList->l->name, "ASSIGN" ))
+			{
+				if (!strcmp( varList->l->name, "NAME" )) {
+					//判断是否能够复制
+					char* newsymbol = varList->l->name;
+					if (//是否已经在表中存在
+						(lookup( newsymbol, constants
+						 ) == NULL /*|| lookup( newsymbol, constant
+						 )->defined == 0//常量不存在未定义问题
+						 */)
+						 &&
+						 (lookup( newsymbol, identifiers
+						 ) == NULL)
+						 )
+					{
+						if (!transferAssignDecl( type, varList )) {
+							yyerror( "失败的类型转换，左右两边操作数不可赋值\n" );
+						}
+						//所有条件都符合,可以开始定义
+						okayToDec( varList->l->l, type, varList->l->r ,ifConst);
+						varList->type = 0;
+
+					}
+					else {
+						yyerror( "变量重复定义！" );
+					}
+
+					//如果可以，就先添加symbol
+						//指令为：mov esp+n immidient
+				}
+				else
+				{
+					yyerror( "暂时不支持数组赋值\n" );
+				}
+			}
+			varList = varList->r;
+			if (varList == NULL)break;
+		}
+	}
+	else {//此时既可以有等于也可以没有，没有时还要考虑数组（仅实现一维数组）
+		Tree newDecl;
+			while (!strcmp( varList->name, "varList" )) {
+				char* newsymbol = varList->l->name;
+				//判断是否已经在表中存在
+				if (!strcmp( newsymbol, "Var" )) {
+					//未定义
+					newDecl = varList->l->l;
+					if (!strcmp( newDecl->name, "NAME" )) {
+						newsymbol = newDecl->name;
+						if (
+							!((lookup( newsymbol, constants
+							) == NULL || lookup( newsymbol, constants
+							)->defined == 0)
+							&&
+							(lookup( newsymbol, identifiers
+							) == NULL) || lookup( newsymbol, identifiers
+							)->defined == 0
+							)) {
+							yyerrer( "声明类型冲突或定义后重复声明\n" );
+						}
+						else {
+							//开始声明
+							okayToDec( newDecl, type, NULL, ifConst );
+						}
+					}
+					else if (!strcmp( newDecl->name, "Array" )) {
+						//newDecl = newDecl->l;
+						newsymbol = newDecl->l->name;
+						if (
+							!((lookup( newsymbol, constants
+							) == NULL || lookup( newsymbol, constants
+							)->defined == 0)
+							&&
+							(lookup( newsymbol, identifiers
+							) == NULL) || lookup( newsymbol, identifiers
+							)->defined == 0
+							)) {
+							yyerrer( "声明类型冲突或定义后重复声明\n" );
+						}
+						else {
+							Type ty;
+							if (newDecl->r == NULL) {
+								ty = PRT( type );
+							}
+							else {
+								if (!strcmp( newDecl->r->name, "CNST" )&&newDecl->r->opType==INT) {
+									ty=arrayType( type, newDecl->r->u.i );
+
+								}
+								else {
+									yyerror( "不可用的指数类型\n" );
+								}
+							}
+							okayToDec( varList->l->l, type, NULL, ifConst );
+						}
+					}
+					
+					
+				}
+				
+				else if (!strcmp( varList->l->name, "ASSIGN" ))
+				{
+					if (!strcmp( varList->l->l->name, "NAME" )) {
+						//判断是否能够复制
+						newsymbol = varList->l->l->l->name;
+						if (
+							!((lookup( newsymbol, constants
+							) == NULL || lookup( newsymbol, constants
+							)->defined == 0)
+							&&
+							(lookup( newsymbol, identifiers
+							) == NULL) || lookup( newsymbol, identifiers
+							)->defined == 0
+							)) {
+							yyerrer( "声明类型冲突或定义后重复声明\n" );
+						}
+						else
+							okayToDec( varList->l->l->l, type, varList->l->l->r, ifConst );
+						if (!transferAssignDecl( type, varList )) {
+							yyerror( "失败的类型转换，左右两边操作数不可赋值\n" );
+							}
+					}
+					else yyerror( "暂时不支持数组赋值\n" );
+				}
+				
+				//Tree examErrorNoAssign = varList;
+				varList = varList->r;
+				if (!varList)break;
+			}
+	}
+	return newNode( "DEC", type, vl,NOP, type->ty->op, ifConst );
+}
+
+void findIfExist( Tree var,Tree type ) {
+	Symbol p = lookup( var->name, &identifiers );
+	if (!p || (p&&p->scope < level)) {
+		p=install( var->name, identifiers );
+		p->type = type;
+		//return 1;
+	}
+	else {
+		yyerror( "声明重复\n" );
+	}
+	
+}
+
+Tree funcDef(Tree type,Tree name,Tree args,int ifconst,Tree explist ) {
+	//画个树的图
+	//进入函数level+1
+	
+	Tree aftReturn = NULL;
+
+	//检查是否存在
+	if (lookup( name->idtype, identifiers )&& lookup( name->idtype, identifiers )->type->op==FUNCTION && lookup( name->idtype, identifiers )->defined == 1) {
+		yyerror( "函数定义已存在\n" );
+	}
+	Type *proto;
+	int i = 0;
+	Tree fundec = args;
+	while (fundec != NULL) {
+		i += 1;
+		fundec = fundec->r;
+	}
+	proto = (Type*)malloc( i * sizeof( Type ) );
+	proto[i] = NULL;
+	fundec = args;
+	level += 1;
+	for (int n = 0;n < i;n++) {
+		findIfExist( fundec->l->l->r, fundec->l->l->l );
+		proto[n] = fundec->l->l->l->ty;
+		if (fundec->l->l->l->type == 0)
+			proto[n]->op = CONST;
+	}
+	level -= 1;
+	
+	Tree aftReturn=NULL;
+	if (type->ty->op != VOID) {
+		aftReturn = newNode( "PUSH", NULL, NULL, PUSH, name->type, 3 );
+	}
+	Tree nop = newNode( "nop", explist, aftReturn, CALL, name->ty, 2 );
+	Tree addrl = newNode( "function", nop, aftReturn, NOP, name->ty, 2 );
+	addrl->ty=func( type->type, proto );
+	level += 1;
+	return addrl;
+}
+
+
+
+Tree changeToUnsigned( Tree oldType ) {
+	if (oldType->ty->op == INT) {
+		oldType->ty = unsignedinttype;
+		oldType->opType = UNSIGNED;
+	}
+	else if (oldType->ty->op == CHAR) {
+		oldType->ty = unsignedchartype;
+		oldType->opType = UNSIGNEDCHAR;
+	}
+	else{
+		yyerror( "不可设置为unsigned的类型\n" );
+	}
+	return oldType;
+}
+//函数声明暂时不实现了，必须要阉割点功能了
+

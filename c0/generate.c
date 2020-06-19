@@ -30,6 +30,9 @@
 源操作2   sou2
 sou: imm
 	 reg
+		
+	实现打印
+	data段包括constants与所有全局变量（identification表中残留的）
 */
 int assLine=0;//打印汇编条数
 int functionNumber = 0;//函数个数：

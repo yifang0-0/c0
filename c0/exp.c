@@ -315,7 +315,7 @@ Tree getFuncName( Tree name, Tree explist ) {
 		//当前变量是函数名
 		Tree arfReturn = NULL;
 		if (name->opType != VOID) {
-			arfReturn = newNode( "PUSH", NULL, NULL, PUSH, name->type, 3 );
+			arfReturn = newNode( "POP", NULL, NULL, POP, name->type, 3 );
 		}
 		Tree nop= newNode( "nop", explist, arfReturn, CALL, name->ty, 2 );
 		Tree addrl = newNode( "CALL", nop, NULL, CALL,name->ty, 2 );
@@ -377,7 +377,7 @@ Tree setConstants( Tree cons ) {
 	else
 	{
 		Tree addrl = newNode( "ADDRG", cons, NULL, ADDRG,ARRAY , 0 );
-		addrl->ty = arrayType( chartype, strlen(cons->str->len), 1 );
+		addrl->ty = arrayType( chartype, strlen(cons->str->len));
 		cons->opType = CHAR;
 		cons->type = 0;
 		//暂时只考虑保存位置，type信息由以上type参数保存

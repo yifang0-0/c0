@@ -117,10 +117,10 @@ Tree newast( const char*name, int num, ... ) {
 			a->sym=string( strinfo );
 		}
 		else if (!strcmp( a->name, "INTNUM" )) { 
-			
+			a->u.i = atoi( yytext );
 		}
 		else if (!strcmp( a->name, "APPROXNUM" )) {
-			a->sym = doubleconst( atof( yytext ) );
+			a->u.f = ( atof( yytext ) );
 		}
 		else if (!strcmp( a->name, "NAME" )) {
 		/*	char*t;t = (char*)malloc( sizeof( char* ) * 16 );strcpy( t, yytext );
@@ -128,10 +128,33 @@ Tree newast( const char*name, int num, ... ) {
 		    a->i->name  = t ;
 			a->i->varid = -1;*/
 			a->sym = firstInit( name );
-			a->idtype
+			strcpy( a->idtype, yytext );
 		}
 		else if (!strcmp( a->type, "TYPE" )) {
-			a->sym = firstInit( name );
+			if (!strcmp( yytext, "char" )) {
+				a->ty = chartype;
+				a->opType =CHAR ;
+				
+			}
+			else if (!strcmp( yytext, "int" )) {
+				a->ty = inttype;
+				a->opType = INT;
+			}
+			else if (!strcmp( yytext, "float" )) {
+				a->ty = floattype;
+				a->opType = FLOAT;
+			}
+			else if (!strcmp( yytext, "string" )) {
+				a->ty = voidptype;
+				a->opType = CHAR;
+			}
+			else if (!strcmp( yytext, "void" )) {
+				a->ty = voidptype;
+				a->opType = VOID;
+			}
+			else {
+				yyerror( "该类型暂未实现\n" );
+			}
 		}
 
 	}

@@ -56,7 +56,7 @@ SUB STAR DIV AND OR DOT NOT LP RP LB RB LSB RSB PS DS AERROR TRUE FALSE
 
 Program:
 	{printf("no input");treefree($$);}
-	 |ExtDefList  {$$=newast("Program",1,$1);printf("syntax tree:\n");eval_print($$,0);printf("syntax tree!\n\n");}
+	 |ExtDefList  {typeInit();$$=newast("Program",1,$1);printf("syntax tree:\n");eval_print($$,0);printf("syntax tree!\n\n");}
     ;
 
 ExtDefList:
@@ -65,20 +65,19 @@ ExtDefList:
 	;
 ExtDef:
 	Specifire SEMI	{$$=newast("ExtDef",2,$1,$2);}
-	|Specifire FunDec Compst	{$$=newast("ExtDef",3,$1,$2,$3);}
-	|Specifire ExtVarList SEMI{$$=newast("ExtDef",3,$1,$2,$3);}
-	|CONST Specifire FunDec Compst	{$$=newast("ExtDef",3,$1,$2,$3);}
-	|CONST Specifire ExtVarList SEMI{$$=newast("ExtDef",3,$1,$2,$3);}
+	|Specifire NAME FunDecList Compst	{$$=funcDef($1,$2,$3,0,$4) ;}
+	|Specifire VarList SEMI{$$=varDec( $1,$2, 1 );}
+	|Specifire NAME FunDecList SEMI{$$=funcDef($1,$2,$3,0,NULL);}
+	|CONST Specifire NAME FunDecList Compst	{$$=funcDef($1,$2,$3,1,$4);}
+	|CONST Specifire VarList SEMI{$$=varDec( $1, $2, 1 );}
+
 	;
-ExtVarList:DecVar COMMA VarList {$$=newast("ExtVarList",3,$1,$2,$3);}
-	|DecVar {$$=createList("",Tree l, Tree r );}
-	|FunDec {$$=newast("ExtVarList",1,$1);}
-	;
-FunDec:NAME FunDecList {$$=newast("FunDec",2,$1,$2);}
+
+	
 	;
 /*Specifire*/
-Specifire:TYPE {$$=newast("Specifire",1,$1);}
-	|UNSIGNED TYPE {$$=newast("Specifire",1,$1);
+Specifire:TYPE {$$=$1;}
+	|UNSIGNED TYPE {$$=changeToUnsigned($1);
 	|StructSpecifire {$$=newast("Specifire",1,$1);}
 	|UnionSpecifire {$$=newast("Specifire",1,$1);}
 	;
@@ -108,31 +107,31 @@ DefList:Def DefList  {$$=createList("DefList",$1,$2);}
 	|Def{$$=createList( "DefList",$1,NULL);}
 	;
 Def:
-Specifire VarList SEMI {$$=newast("Def",3,$1,$2,$3);}
-|CONST Specifire VarList SEMI {$$=newast("Def",3,$1,$2,$3);}
+Specifire VarList SEMI {$$=varDec( $1, $2, 0 );}
+|CONST Specifire VarList SEMI {$$=varDec( $2, $3, 1 );}
 	;
-FunDecList:LP fDecList RP {$$=newast("FunDecList",3,$1,$2,$3);}
-	|LP  RP {$$=newast("FunDecList",2,$1,$2);}
+FunDecList:LP fDecList RP {$$=$2;}
+	|LP  RP {$$=NULL;}
 	;
 fDecList:
-fDecVar COMMA fDecList {$$=newast("fDecList",3,$1,$2,$3);}
-| fDecVar{$$=newast("fDecList",1,$1);}
+fDecVar COMMA fDecList {$$=createList("funcDecList",$1,$3);}
+| fDecVar{$$=createList( "funcDec", $1,NULL);}
 	;
-fDecVar:Specifire Var {$$=newast("DecVarList",2,$1,$2);}
-|CONST Specifire Var {$$=newast("DecVarList",2,$1,$2);}
+fDecVar:Specifire Var {$$=funcVarDec( $2,$1,0 ) ;}
+|CONST Specifire Var {$$=funcVarDec( $3,$2,1 );}
 	;
 
 	
 /*Declaration*/
-VarList:DecVar COMMA VarList {$$=createList("VarList" $1,$3 );}
-	|DecVar {$$=$1;}
+VarList:DecVar COMMA VarList {$$=createList("VarList", $1,$3 );}
+	|DecVar {$$=createListL( "VarList", $1,NULL);}
 	;
-DecVar: Var {$$=$1;}
-	|Var ASSIGN Exp{$$=exprOPDouble( Var,Exp, ASSIGN );}
+DecVar: Var {$$=createListL( "Var", $1,NULL);;}
+	|Var ASSIGN Exp{$$=exprOPDouble( $1,$3, $2 );}
 	;
 Var: NAME {$$=$1;}
-	|Var LSB Exp RSB {$$=createList( "Var", Var,Exp);}
-	|Var LSB  RSB {$$=createList( "Var", Var,NULL);}
+	|Var LSB Exp RSB {$$=createList( "Array", $1,$3);}
+	|Var LSB  RSB {$$=createList( "Array",$1,NULL);}
 	;
 	
 Exp:
@@ -159,7 +158,7 @@ Exp:
 		|Exp ASSIGN Exp{$$=exprOPDouble($1,$3,$2);}
         |LP Exp RP{$$=$2;}
         |NAME LP Args RP {$$=getFuncName($1,$3);}
-        |NAME LP RP {$$=getArrayName($1,NULL);}
+        |NAME LP RP {$$=getFuncName($1,NULL);}
         |NAME LSB Exp RSB {$$=getArrayName($1,$3);}//NAME[id]
         |NAME {$$=getVarName($1)}
         |INTNUM {$$=setContants($1);}

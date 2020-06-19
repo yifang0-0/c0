@@ -268,15 +268,16 @@ struct type {
 	int align;
 	union {
 		Symbol sym;
-		Type *functype;
+		//Type *functype;
 		struct  {
 			Type *proto;
+			int size;
 		}f;
 	}u;
 };
 //类型表只有一个
-static Type type( int op, int size, int align, Type ty, void * sym );
-Type arrayType( Type ty, int n, int a );
+static Type type( int op, Type ty, int size, void *sym );
+Type arrayType( Type ty, int n );
 /******************************String**************************/
 //string type
 
@@ -355,3 +356,15 @@ extern Interface *IR;
 
 /**********************exp*****************************/
 Tree exprCOMMA( Tree right );
+
+/***********************gen***************************/
+extern int assLine = 0;//打印汇编条数
+extern int functionNumber = 0;//函数个数：
+extern int constantsNumber = 0;//常量个数：
+extern int identificaionOffset = 0;//域内变量偏移值：
+
+
+Value newValue( int type, Value oldValue, int oldType );
+Tree varDec( Tree type, Tree vl, int ifConst );
+void okayToDec( Tree newsymbol, Tree type, Tree value );
+void setNewSymbol( Symbol newsym, Type type );
