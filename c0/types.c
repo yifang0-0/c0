@@ -55,7 +55,7 @@ static Type type( int op, Type ty,int size,void *sym ) {
 				return &tm->type;
 		}
 	}
-	tm = (Type)malloc( sizeof( struct type ) );
+	tm = (struct entry*)malloc( sizeof( struct entry ) );
 	tm->type.type = ty;
 	tm->type.op = op;
 	tm->type.size = size;
@@ -126,7 +126,7 @@ Type qual( int op, Type ty ) {
 		yyerror( "qualified function type ignored\n" );
 	else if (isconst( ty ) && op == CONST
 			 )
-		printf( "illegal type `%k %t'\n", op, ty );
+		printf( "illegal type %d  \n", op );
 	else {
 		if (isqual( ty )) {
 			op += ty->op;
@@ -138,7 +138,7 @@ Type qual( int op, Type ty ) {
 }
 Type func( Type ty, Type *proto ) {
 	if ( (isarray( ty ) || isfunc( ty )))
-		printf( "illegal return type `%t'\n", ty );
+		yyerror( "illegal return type \n" );
 	ty = type( FUNCTION, ty,ty->size, NULL );
 	ty->tb = identifiers;
 	ty->u.f.proto = proto;

@@ -88,7 +88,9 @@ void okayToDec(Tree newsymbol,Type type,Tree value,int ifconst ) {
 		newsym = install( newsymbol->idtype, &constants, CONSTANT );identificaionOffset -= 1;
 	}
 	else newsym = install( newsymbol->idtype, &identifiers, level);
-	newsym-> type= !ifconst;
+	newsymbol->opType = type->op;
+	newsymbol->opPr=INDIR;
+	newsym-> type= type;
 	newsym->ifconst = ifconst;
 	setNewSymbol( newsym, type );
 	if(value!=0){
@@ -169,7 +171,7 @@ Tree varDec( Tree type, Tree vl, int ifConst ) {
 						//所有条件都符合,可以开始定义
 						okayToDec( varList->l->l, type->ty, varList->l->r ,ifConst);
 						varList->type = 0;
-
+						//在这里需要插入一个生成读ebp的东西
 					}
 					else {
 						yyerror( "变量重复定义！" );
@@ -198,6 +200,7 @@ Tree varDec( Tree type, Tree vl, int ifConst ) {
 					if (!strcmp( newDecl->name, "NAME" )) {
 						newsymbol = newDecl->idtype;//idtype
 						if (
+							//这里的查找与NULL相关，不太对
 							((lookup( newsymbol, constants ) != NULL)
 							||
 							(lookup( newsymbol, identifiers ) != NULL) && lookup( newsymbol, identifiers )->defined != 0
@@ -213,22 +216,22 @@ Tree varDec( Tree type, Tree vl, int ifConst ) {
 					else if (!strcmp( newDecl->name, "Array" )) {
 						//newDecl = newDecl->l;
 						newsymbol = newDecl->l->idtype;
+						Symbol find1 = (lookup( newsymbol, constants ));
+						Symbol find2 = (lookup( newsymbol, identifiers ));
 						if (
-							((lookup( newsymbol, constants) != NULL)
-							||
-							(lookup( newsymbol, identifiers) != NULL) && lookup( newsymbol, identifiers)->defined != 0
+						find1||(find2&&find2->defined==1)
 								)
-							) {
+							 {
 							yyerror( "声明类型冲突或定义后重复声明\n" );
 						}
 						else {
 							Type ty;
 							if (newDecl->r == NULL) {
-								ty = PRT( type );
+								ty = PRT( type->ty );
 							}
 							else {
 								if (!strcmp( newDecl->r->name, "CNST" )&&newDecl->r->opType==INT) {
-									ty=arrayType( type, newDecl->r->u.i );
+									ty=arrayType( type->ty, newDecl->r->u.i );
 
 								}
 								else {
@@ -324,9 +327,11 @@ Tree funcDef(Tree type,Tree name,Tree args,int ifconst,Tree explist ) {
 		int size = 0;
 		Tree fundec = args;
 		int i = 0;//计算参数的个数
-		while ( !strcmp(fundec->name,"funcDecList")|| !strcmp( fundec->name,"funcDec" )) {
-			i += 1;
-			fundec = fundec->r;
+		if (fundec != NULL) {
+			while (!strcmp( fundec->name, "funcDecList" ) || !strcmp( fundec->name, "funcDec" )) {
+				i += 1;
+				fundec = fundec->r;
+			}
 		}
 		fundec = args;
 		proto = (Type*)malloc( i * sizeof( Type ) );

@@ -7,18 +7,19 @@ void generateAsm( ) {
 	
 	FILE *fpWrite = fopen( "data.txt", "a" );
 	if (fpWrite == NULL) { 
-		return 0; 
+		
 		yyerror( "写入文件失败\n" );
+		exit( 0 );
 	}
-	fprintf( fpWrite, "\%include \"io.asm\"\n" );
+	fprintf( fpWrite, "%%include \"io.asm\"\n" );
 	generateData( fpWrite );
 	generateBss( fpWrite );
 	generateMain( fpWrite );
-
+	
 
 }
 void generateMain( FILE *fpWrite ) {
-
+	scanMidEqual( fpWrite );
 }
 void printfString( FILE *fpWrite ) {
 	stringList newList = constString->next;
@@ -30,7 +31,7 @@ void printfString( FILE *fpWrite ) {
 void printfConstant( FILE *fpWrite );
 void generateData( FILE *fpWrite ) {
 	//数据段的输出
-	fprintf( fpWrite, "section \.data\n" );
+	fprintf( fpWrite, "section .data\n" );
 	printfString( fpWrite );
 	printfGlobal( fpWrite, constants, CONSTANT );
 	printfGlobal( fpWrite,identifiers, GLOBAL );
@@ -48,13 +49,13 @@ void generateStart( FILE *fpWrite ) {
 void generateFuncHead( FILE *fpWrite,int offset ) {
 	fprintf( fpWrite, "    push ebp\n" );
 	fprintf( fpWrite, "    mov ebp,esp\n" );
-	fprintf( fpWrite, "    push ebx\n" );
-	fprintf( fpWrite, "    sub esp,%d\n" );
+	//fprintf( fpWrite, "    push ebx\n" );
+	fprintf( fpWrite, "    sub esp,%d\n",offset*4 );
 	
 }
 
 
 void generateBss( FILE *fpWrite ) {
-	fprintf( fpWrite, "section \.bss\n" );
+	fprintf( fpWrite, "section .bss\n" );
 	printfidentifiers( fpWrite, identifiers, GLOBAL );
 }

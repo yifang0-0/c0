@@ -31,7 +31,6 @@
     <ClCompile Include="list.c" />
     <ClCompile Include="statement.c" />
     <ClCompile Include="string.c" />
-    <ClCompile Include="trans.c" />
     <ClCompile Include="types.c" />
     <ClCompile Include="sym.c" />
     <ClCompile Include="源.cpp" />
@@ -64,6 +63,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="cpp.hint" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="data.txt" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>

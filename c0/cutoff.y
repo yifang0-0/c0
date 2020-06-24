@@ -33,7 +33,6 @@ SUBLEX STARLEX DIVLEX ANDLEX ORLEX BANDLEX BORLEX BXORLEX NOTLEX LP RP LB RB LSB
 
 /*priority*/
 %left COMMA
-
 %right ASSIGN
 %left BORLEX
 %left ANDLEX
@@ -93,14 +92,14 @@ UnionSpecifire:UNION NAME LSB DefList RSB {$$=newast("UnionSpecifire",5,$1,$2,$3
 Compst:LB  STATELIST RB {$$=$2; }
 STATELIST:
 	STATE STATELIST {$$=createListL("STATELIST",$1,$2);}
-	|{$$=newast("STATELIST",0,-1);}
+	|{$$=createListL("STATELIST",NULL,NULL);}
 STATE:
 	//Def {$$=newast("STATE",1,$1);}
 	Exp SEMI {$$=$1;temp=0;}//临时变量重设
-	|Compst {$$=$1; exitscope( )}
+	|Compst {$$=$1; exitscope( );}
 	|DefList {$$=createListL("STATE",$1,NULL);}
 	|RETURN  SEMI {$$=Return($1,NULL);}
-	|RETURN  EXP SEMI {$$=Return($1,$2);}
+	|RETURN  Exp SEMI {$$=Return($1,$2);}
 	|IF LP Exp RP STATE {$$=ifStatement($5,$3,NULL);}
 	|IF LP Exp RP STATE ELSE STATE {$$=ifStatement($5,$3,$7);}
 	|WHILE LP Exp RP STATE

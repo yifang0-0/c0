@@ -1,4 +1,3 @@
-#include "c.h"
 
 /*
 流程：先打四元式，再generateHead,再优化四元式
@@ -276,12 +275,20 @@ struct mid* opMidGen( Tree midOp, int ifeax, struct mid* newMid ) {
 	  //POP op1是操作数
 	  //op1 Size决定那个寄存器
 	  //保存ifeax
+
 		newMid->op = "EQ";
-		newMid->op1 = NULL;
-		newMid->op1Size = midOp->intgr;
+		if (midOp->l->opPr != INDIR) {
+			newMid->op1 = "ebp";
+			newMid->op1Offset = midOp->l->offset;
+		}
+		else
+			newMid->op1 = "eax";
+		newMid->resultOffset = midOp->intgr;
 		newMid->op2 = NULL;
 		newMid->op2Size = 0;
 		newMid->ifeax = ifeax;
+		
+	
 	}
 
 	else if (newMid->opNUM == INDIR) {
@@ -347,7 +354,7 @@ struct mid* opMidGen( Tree midOp, int ifeax, struct mid* newMid ) {
 		//先判断第一个
 		if (midOp->l->opPr != INDIR) {
 			newMid->op1 = "0ebp";
-			newMid->op1Offset = midOp->offset;
+			newMid->op1Offset = midOp->l->offset;
 		}
 		else {
 			newMid->op1 = "eax";
@@ -356,14 +363,14 @@ struct mid* opMidGen( Tree midOp, int ifeax, struct mid* newMid ) {
 		}
 		if (midOp->r->opPr != INDIR) {
 			newMid->op2 = "0ebp";
-			newMid->op2Offset = midOp->offset;
+			newMid->op2Offset = midOp->r->offset;
 		}
 		else {
 			newMid->op1 = "edx";
 			newMid->op2Offset = 0;
 			//自己取得放到edx
 		}
-
+		newMid->resultOffset = midOp->offset;
 		newMid->op1Size = regsize[midOp->l->opType];
 		newMid->op2Size = regsize[midOp->r->opType];
 		newMid->ifeax = ifeax;
@@ -552,19 +559,55 @@ void scanMainEqual( Type funcType, struct mid* midEqual ) {
 				fprintf( fpWrite, "   add edx,eax\n", op1Size );
 
 		}
-		else if (!strcmp( op, "push" )) {
-			if (ifeax)
-				fprintf( fpWrite, "   add eax,edx\n", op1Size );
+		else if (!strcmp( op, "arg" )) {
+			if (!strcmp( op1, "ebp" ))
+				fprintf( fpWrite, "   push [ebp-%d]\n", op1Offset );
 			else
-				fprintf( fpWrite, "   add edx,eax\n", op1Size );
+				fprintf( fpWrite, "   push edx\n", op1Size );
 
 		}
 		else if (!strcmp( op, "SUB" )) {
-			if (ifeax)
-				fprintf( fpWrite, "   sub eax,edx\n", op1Size );
+			//strlwr()
+			if (!strcmp( op1, "0ebp" )) {
+				fprintf( fpWrite, "   mov eax,[ebp+%d]\n", op1Offset );
+			}
+			if (!strcmp( op2, "0ebp" )) {
+				fprintf( fpWrite, "   mov edx,[ebp+%d]\n", op2Offset );
+			}
 			else
-				fprintf( fpWrite, "   add edx,eax\n", op1Size );
-
+				fprintf( fpWrite, "   sub eax,edx\n", op2Offset );
+			if (!ifeax)
+				fprintf( fpWrite, "   mov edx,eax\n", op2Offset );
+		}
+		else if (!strcmp( op, "ADD" )) {
+			//strlwr()
+			if (!strcmp( op1, "0ebp" )) {
+				fprintf( fpWrite, "   mov eax,[ebp+%d]\n", op1Offset );
+			}
+			if (!strcmp( op2, "0ebp" )) {
+				fprintf( fpWrite, "   mov edx,[ebp+%d]\n", op2Offset );
+			}
+			else {
+				if (!ifeax) {
+					fprintf( fpWrite, "   add edx,eax\n", op2Offset );
+					fprintf( fpWrite, "   mov edx,edx\n", op );
+				}
+				fprintf( fpWrite, "   add eax,edx\n", op2Offset );
+			}
+		}
+		else if (!strcmp( op, "MUL" )) {
+			//strlwr()
+			if (!strcmp( op1, "0ebp" )) {
+				fprintf( fpWrite, "   mov eax,[ebp+%d]\n", op1Offset );
+			}
+			if (!strcmp( op2, "0ebp" )) {
+				fprintf( fpWrite, "   mov edx,[ebp+%d]\n", op2Offset );
+			}
+			else {
+				fprintf( fpWrite, "   mul eax,edx\n", op2Offset );
+				if (!ifeax)
+					fprintf( fpWrite, "   mul edx,eax\n", op2Offset );
+			}
 		}
 		else if (!strcmp( op, "mov" )) {
 

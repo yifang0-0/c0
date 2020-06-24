@@ -22,18 +22,24 @@ char* string(char* str) {
 }
 
 char* stringd( int n ) {
-	char str[25], *s = str + sizeof( str );
+	char str[8], *s = str + sizeof( str );
 	unsigned m;
+	*--s = '\0';
 	if (n == INT_MIN) {
 		m = (unsigned)INT_MAX + 1;
 	}
+	
 	else if( n < 0 )
 		m = -n;
 	else m = n;
-	do *--s = m % 10 + '0';
-	while ((m /= n) != 0);
-	if (n < 0)
-		*--s = '-';
+	if (m == 0) *--s = '0';
+	else {
+		do *--s = m % 10 + '0';
+		while ((m /= n) != 0);
+		if (n < 0)
+			*--s = '-';
+	}
+	
 	return stringn( s, str + sizeof( str ) - s );
 }
 
@@ -45,7 +51,6 @@ char* stringn( char*str, int len ) {
 	end = str + len;
 	for (p = buckets[h];p;p = p->link) {
 		if (len == p->len) {
-			end = (p->str + p->len - 1);
 			char *s1 = str, *s2 = p->str;
 			do {
 				if (s1 == end)
@@ -80,21 +85,22 @@ char* stringn( char*str, int len ) {
 	for (p->str = next;str <= end;) {
 		*next++ = *str++;
 	}
-	//next = '\0';
+	*next++ = '\0';
 	//p->len = len;
 	p->link = buckets[h];
 	buckets[h] = p;
 	//将新字符串插在头部，如果是新字符那就指向初始化后的一个空bucket结构
-	newStringList( p->str );
+	//newStringList( p->str );
 	return p->str;
 	;
 }
 
-int getNumber( char* m) {
-	stringList newList = constString->next;
-	while (newList != NULL) {
-		if (!strcmp( m, newList->a ))return newList->i;
-		newList = newList->next;
-	}
-	return -1;
+stringList getNumber( char* m) {
+	stringList newList = (stringList)malloc( sizeof( struct stringlist ) );
+	newList->a = stringn( m, strlen( m ) );
+	newList->i= stringNum++;
+	newList->next = constString->next;
+	constString->next = newList;
+	return  newList;
+	
 }

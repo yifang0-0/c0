@@ -63,7 +63,7 @@ Symbol install( char*name, Table*tpp, int level ) {
 //void initTable( )
 Table table( Table tp, int level ) {
 	Table newTb;
-	newTb = (Table)malloc( sizeof( Table ) );//给fun类型表分配的空间默认是第二块
+	newTb = (Table)malloc( sizeof( struct table ) );//给fun类型表分配的空间默认是第二块
 	int i = 0;
 	for( i = 0;i < sym_HASH_SIZE;i++ ){
 		newTb->buckets[i] = NULL;
@@ -114,8 +114,8 @@ Symbol constant( Type ty, Value v )
 	p->sym.scope = CONSTANT;
 	p->sym.type = ty;
 	p->sym.u.c.v = v;
-	p->sym.up = constants->buckets[h];
-	p->link = constants->all;
+	p->link = constants->buckets[h];
+	p->sym.up = constants->all;
 	constants->all = &p->sym;
 	constants->buckets[h] = p;
 	//if (ty->u.sym && !ty->u.sym->addressed)
@@ -252,7 +252,7 @@ void subIdentifiersPrintf( FILE *fpWrite, int op, struct entry* p ) {
 }
 
 void printfGlobal( FILE *fpWrite,Table tbb ,int level) {
-	struct entry *p=allsymbols( tbb );
+	Symbol p=allsymbols( tbb );
 	//struct entry *p;
 	while (p) {
 		//数组
@@ -264,28 +264,19 @@ void printfGlobal( FILE *fpWrite,Table tbb ,int level) {
 		//......
 		//非数组
 		//name db/dw/dd 值
-		int op = p->sym.type->op;
+		int op = p->type->op;
 		subConstantPrintf( fpWrite, op, p );
-		p = p->link;
+		p = p->up;
 	}
 
 }
 void printfidentifiers( FILE *fpWrite, Table tbb, int level ) {
-	struct entry *p = allsymbols( tbb );
+	Symbol p = allsymbols( tbb );
 	//struct entry *p;
 	while (p) {
-		//数组
-		//name times n 初始值 我秃了，数组咋搞
-		//name 
-		//dd 1h
-		//dd 2h
-		//dd 3h
-		//......
-		//非数组
-		//name db/dw/dd 值
-		int op = p->sym.type->op;
+		int op = p->type->op;
 		subIdentifiersPrintf( fpWrite, op, p );
-		p = p->link;
+		p = p->up;
 	}
 
 }

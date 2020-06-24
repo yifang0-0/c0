@@ -55,7 +55,9 @@ Tree newast( const char*name, int num, ... ) {
 			char* strinfo;
 			strinfo = (char*)malloc( sizeof( char )* sizeof(&yytext) );strcpy( strinfo, yytext );
 			//string( strinfo );
-			a->intgr = getNumber( string( strinfo ) );
+			stringList newList;
+			newList=getNumber( yytext );
+			a->intgr = newList->i;
 			//按常量处理
 			//string 类型常量必须保存在data段
 

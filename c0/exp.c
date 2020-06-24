@@ -70,7 +70,7 @@ Tree exprOPDouble( Tree oprand1, Tree oprand2, Tree op ) {
 				}*/
 				Symbol tempSym = lookup( stringd( temp ), identifiers );
 				if (tempSym == NULL) {
-					tempSym = install( stringd( temp ), identifiers, level );
+					tempSym = install( stringd( temp ), &identifiers, level );
 					tempSym->offset = identificaionOffset++;
 					tempSym->temporary = 1;
 
@@ -139,7 +139,7 @@ Tree exprOPDouble( Tree oprand1, Tree oprand2, Tree op ) {
 			op->type = 0;//即不能进行赋值操作
 			Symbol tempSym = lookup( stringd( temp ), identifiers );
 			if (tempSym == NULL) {
-				tempSym = install( stringd( temp ), identifiers, level );
+				tempSym = install( stringd( temp ), &identifiers, level );
 				tempSym->offset = identificaionOffset++;
 				tempSym->temporary = 1;
 
@@ -167,7 +167,7 @@ Tree exprOPDouble( Tree oprand1, Tree oprand2, Tree op ) {
 				}*/
 				Symbol tempSym = lookup( stringd( temp ), identifiers );
 				if (tempSym == NULL) {
-					tempSym = install( stringd( temp ), identifiers, level );
+					tempSym = install( stringd( temp ), &identifiers, level );
 					tempSym->offset = identificaionOffset++;
 					tempSym->temporary = 1;
 
@@ -187,21 +187,7 @@ Tree exprOPDouble( Tree oprand1, Tree oprand2, Tree op ) {
 				yyerror( "" );
 				return NULL;
 			}
-			Symbol temp = lookup( stringd( temp ), identifiers );
-			if (temp == NULL) {
-				temp = install( stringd( temp ), identifiers, level );
-				temp->offset = identificaionOffset++;
-				temp->temporary = 1;
-				
-			}
-			else {
-				//当前临时变量可以复用
-				//好像没什么要做的
-			}			
-			temp++;
-			maxTemp = (temp > maxTemp) ? temp : maxTemp;
-			op->offset =temp->offset;
-			return op;
+			
 		}
 	}
 		else if (!strcmp( op->name, "RELOP" )) {
@@ -245,7 +231,7 @@ Tree exprOPDouble( Tree oprand1, Tree oprand2, Tree op ) {
 				}
 				Symbol tempSym = lookup( stringd( temp ), identifiers );
 				if (tempSym == NULL) {
-					tempSym = install( stringd( temp ), identifiers, level );
+					tempSym = install( stringd( temp ), &identifiers, level );
 					tempSym->offset = identificaionOffset++;
 					tempSym->temporary = 1;
 
@@ -275,7 +261,7 @@ Tree exprOPDouble( Tree oprand1, Tree oprand2, Tree op ) {
 				op->type = 0;//即不能进行赋值操作
 				Symbol tempSym = lookup( stringd( temp ), identifiers );
 				if (tempSym == NULL) {
-					tempSym = install( stringd( temp ), identifiers, level );
+					tempSym = install( stringd( temp ), &identifiers, level );
 					tempSym->offset = identificaionOffset++;
 					tempSym->temporary = 1;
 
@@ -353,7 +339,7 @@ Tree exprOPDouble( Tree oprand1, Tree oprand2, Tree op ) {
 				}
 				Symbol tempSym = lookup( stringd( temp ), identifiers );
 				if (tempSym == NULL) {
-					tempSym = install( stringd( temp ), identifiers, level );
+					tempSym = install( stringd( temp ), &identifiers, level );
 					tempSym->offset = identificaionOffset++;
 					tempSym->temporary = 1;
 
@@ -375,22 +361,28 @@ Tree exprOPDouble( Tree oprand1, Tree oprand2, Tree op ) {
 
 Tree getVarName( Tree name ) {
 	//如果是一个变量
-	Symbol find;
-	if (((find = lookup( name->idtype, constants )) != NULL)|| (find = lookup( name->idtype, identifiers )!=NULL&&find->scope==GLOBAL)) {
-		//find = lookup( name->idtype, constants );
+	Symbol find1= lookup( name->idtype, constants );
+	Symbol find2 = lookup( name->idtype, identifiers );
+	if (find1 != NULL) {
 		name->type = 0;
 		name->opPr = NOP;
-		name->opType = find->type->op;
+		name->opType = find1->type->op;
 		return newNode( "INDIRNAME", name, NULL, INDIR, name->opType, 0 );
 	}
-	else if ((find = lookup( name->idtype, identifiers )) != NULL&&(find->scope>GLOBAL)) {
-		//find = lookup( name->idtype, identifiers );
+	else if (find2!=NULL&&find2->scope==GLOBAL)
+	{
+		name->type = 0;
+		name->opPr = NOP;
+		name->opType = find2->type->op;
+		return newNode( "INDIRNAME", name, NULL, INDIR, name->opType, 0 );
+	}
+	else if (find2 != NULL && find2->scope > GLOBAL)
+	{
 		name->type = 1;
 		name->opPr = NOP;
-		name->opType = find->type->op;
+		name->opType = find2->type->op;
 		return newNode( "INDIREXP", name, NULL, INDIR, name->opType, 1 );
 	}
-
 	else {
 		yyerror( "未定义的变量\n" );
 	}
@@ -422,7 +414,7 @@ Tree getFuncName( Tree name, Tree arglist ) {
 		Tree nop = newNode( "funcuse", addrl, arfReturn, NOP, name->opType, 2 );
 		Symbol tempSym = lookup( stringd( temp ), identifiers );
 		if (tempSym == NULL) {
-			tempSym = install( stringd( temp ), identifiers, level );
+			tempSym = install( stringd( temp ), &identifiers, level );
 			tempSym->offset = identificaionOffset++;
 			tempSym->temporary = 1;
 

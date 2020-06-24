@@ -307,7 +307,7 @@ Value newValue( int type, Value oldValue, int oldType );
 int transferAssignDecl( Tree type, Tree varList );
 Tree varDec( Tree type, Tree vl, int ifConst );
 Symbol findIfExist( Tree var, Tree type, int ifconst );
-void okayToDec( Tree newsymbol, Type type, Tree value );
+void okayToDec( Tree newsymbol, Type type, Tree value, int ifconst );
 void setNewSymbol( Symbol newsym, Type type );
 Tree funcDef( Tree type, Tree name, Tree args, int ifconst, Tree explist );
 Tree changeToUnsigned( Tree oldType );
@@ -319,7 +319,7 @@ Tree setArgs( Tree exp, Tree explist );
 Tree funcVarDec( Tree name, Tree type, int ifconst );
 Tree ifStatement( Tree state1, Tree exp, Tree state2 );
 Tree breakState( Tree brk );
-Tree Return( Tree ret );
+Tree Return( Tree ret, Tree exp );
 struct ifo {
 	// 变量的树结点信息
 	char *name;
@@ -367,6 +367,7 @@ Tree newNode( const char*name, Tree l, Tree r, int oppr, int opty, int type );
  struct mid {
 	 char* op;
 	 int opNUM;
+	 int resultOffset;
 	 char* op1;
 	 int op1Offset;
 	 int op1Size;
@@ -399,9 +400,9 @@ Tree newNode( const char*name, Tree l, Tree r, int oppr, int opty, int type );
  };
  typedef struct stringlist *stringList;
  extern stringList constString;
- int getNumber( char* m );
+ stringList getNumber( char* m );
 
- extern FILE *fpWrite;
+
  extern struct mid*cur;
 
  void generateData( FILE *fpWrite );
@@ -410,4 +411,13 @@ Tree newNode( const char*name, Tree l, Tree r, int oppr, int opty, int type );
  void printfGlobal( FILE *fpWrite, Table tbb, int level );
  void generateAsm( );
  void printfString( FILE *fpWrite );
+
+ void generateFuncHead( FILE *fpWrite, int offset );
+
+ struct mid* midCurUpdate( char* funcName, Type funcType);
+ void midAllInitial( );
+ struct mid* midMainUpdate( Type funcType );
+ void scanMidEqual( FILE * fpWrite );
+ void scanMainEqual( Type funcType, struct mid* midEqual, FILE * fpWrite );
+ void generateMain( FILE *fpWrite );
 #endif
