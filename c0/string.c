@@ -1,14 +1,19 @@
 #include "limits.h"
 #include "c.h"
 #include "dataStructure.h"
-#define STR_HASH_SIZE 1024
+#define STR_HASH_SIZE 32
 #define STR_HASH_SHIFT 2
 //extern char* string ARGS( (char* str) );
 //extern char* stringn ARGS( (char* str,int len) );
 //extern char* stringd ARGS((int n));
 //
+static struct string {
+	char *str;
+	int len;
+	struct string *link;
+}*buckets[32];
 
-extern struct string bucket;
+ struct string bucket;
 
 char* string(char* str) {
 	char *s;
@@ -34,10 +39,10 @@ char* stringd( int n ) {
 
 char* stringn( char*str, int len ) {
 	unsigned int h;
-	int i;
 	char *end;
 	struct string *p;
 	h = hash( str, STR_HASH_SHIFT, STR_HASH_SIZE );
+	end = str + len;
 	for (p = buckets[h];p;p = p->link) {
 		if (len == p->len) {
 			end = (p->str + p->len - 1);
@@ -51,9 +56,11 @@ char* stringn( char*str, int len ) {
 	static char*next, *strlimit;
 	if (next + len + 1 >= strlimit) {
 		/* 如果现有地址不够存储str（） */
-		int n = len + 4 * 1024;
-		next=allocate( n, 0 );
-		if (next == NULL) {
+		int n = len + 4 * 128;
+		if(next!=NULL)
+		next =(char*)realloc( next, n );
+		else next = (char*)malloc( n );
+		/*if (next == melloc) {
 			for (p = buckets[h];p->link;p = p->link) {
 				//分配失败，找到最后一个结点（其link域为null）
 			}
@@ -63,20 +70,31 @@ char* stringn( char*str, int len ) {
 				exit( 1 );
 
 			}
-		}
+		}*/
 	
 		strlimit = next + n;
 	}
-	NEW( p, 0 );
+	p=(struct string*)malloc(sizeof( struct string ));
 	p->len = len;
-	p->str = str;
-	for (p->str = next;str < end;) {
+	//p->str = str;
+	for (p->str = next;str <= end;) {
 		*next++ = *str++;
 	}
-	p->len = len;
+	//next = '\0';
+	//p->len = len;
 	p->link = buckets[h];
 	buckets[h] = p;
 	//将新字符串插在头部，如果是新字符那就指向初始化后的一个空bucket结构
-	return p;
+	newStringList( p->str );
+	return p->str;
 	;
+}
+
+int getNumber( char* m) {
+	stringList newList = constString->next;
+	while (newList != NULL) {
+		if (!strcmp( m, newList->a ))return newList->i;
+		newList = newList->next;
+	}
+	return -1;
 }

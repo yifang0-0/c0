@@ -1,4 +1,4 @@
-#include "dataStructure.h"
+#include "c.h"
 /*
 树节点定义部分
 	事实上这部分节点在遍历的时候只要做到
@@ -75,24 +75,30 @@
 /*
 这是不需要在程序之前生成的函数内定义
 */
+
 void setNewSymbol( Symbol newsym, Type type ) {
 	newsym->defined = 1;
 	newsym->offset = identificaionOffset;
 	newsym->type = type;
 	newsym->size = type->size;
 }
-void okayToDec(Tree newsymbol,Tree type,Tree value,int ifconst ) {
-	Symbol newsym = install( newsymbol->name, constants, level, 1 );
-	newsym->defined = ifconst;
-	setNewSymbol( newsym, type->ty );
+void okayToDec(Tree newsymbol,Type type,Tree value,int ifconst ) {
+	Symbol newsym ;
+	if (ifconst) {
+		newsym = install( newsymbol->idtype, &constants, CONSTANT );identificaionOffset -= 1;
+	}
+	else newsym = install( newsymbol->idtype, &identifiers, level);
+	newsym-> type= !ifconst;
+	newsym->ifconst = ifconst;
+	setNewSymbol( newsym, type );
 	if(value!=0){
-		newsym->u.c.v = newValue( type->ty->op, value->u, value->opType );
+		newsym->u.c.v = newValue( type->op, value->u, value->opType );
 		newsym->defined = 1;
 	}
 	else newsym->defined = 0;
-	identificaionOffset += newsym->size;
-
+	identificaionOffset +=1;
 }
+
 Value newValue( int type, Value oldValue,int oldType )
 {
 	Value newValue;
@@ -116,21 +122,18 @@ Value newValue( int type, Value oldValue,int oldType )
 		default:yyerror( "输入错误得到类型\n" );
 		}
 	}
+	return newValue;
 }
-
-int transferAssignDecl(Tree type,Tree varList ) {
-	if (type->ty->op <= FLOAT && varList->r->opType <= FLOAT) {
-		if (type->ty->op != varList->r->opType) {
-			//转换
-			Tree a = newNode( "TRA", varList->l->r, NULL, CVC - 1 + varList->l->r->opType, varList->l->l->opType, varList->l->l->type );
-			//将等于的右侧类型转换为左侧的，可能丢失精度
-			varList->l->r = a;
+//判断是否可以进行转换
+int transferAssignDecl(Tree type,Tree Var ) {
+	if (type->ty->op <= FLOAT && Var->opType <= FLOAT) {
 			return 1;
 		}
-
-	}
+//类型转换
 	return 0;
 }
+
+
 
 
 Tree varDec( Tree type, Tree vl, int ifConst ) {
@@ -146,9 +149,9 @@ Tree varDec( Tree type, Tree vl, int ifConst ) {
 			}
 			else if (!strcmp( varList->l->name, "ASSIGN" ))
 			{
-				if (!strcmp( varList->l->name, "NAME" )) {
+				if (!strcmp( varList->l->l->name, "NAME" )) {
 					//判断是否能够复制
-					char* newsymbol = varList->l->name;
+					char* newsymbol = varList->l->l->idtype;
 					if (//是否已经在表中存在
 						(lookup( newsymbol, constants
 						 ) == NULL /*|| lookup( newsymbol, constant
@@ -159,11 +162,12 @@ Tree varDec( Tree type, Tree vl, int ifConst ) {
 						 ) == NULL)
 						 )
 					{
+						/*
 						if (!transferAssignDecl( type, varList )) {
 							yyerror( "失败的类型转换，左右两边操作数不可赋值\n" );
-						}
+						}*/
 						//所有条件都符合,可以开始定义
-						okayToDec( varList->l->l, type, varList->l->r ,ifConst);
+						okayToDec( varList->l->l, type->ty, varList->l->r ,ifConst);
 						varList->type = 0;
 
 					}
@@ -192,36 +196,30 @@ Tree varDec( Tree type, Tree vl, int ifConst ) {
 					//未定义
 					newDecl = varList->l->l;
 					if (!strcmp( newDecl->name, "NAME" )) {
-						newsymbol = newDecl->name;
+						newsymbol = newDecl->idtype;//idtype
 						if (
-							!((lookup( newsymbol, constants
-							) == NULL || lookup( newsymbol, constants
-							)->defined == 0)
-							&&
-							(lookup( newsymbol, identifiers
-							) == NULL) || lookup( newsymbol, identifiers
-							)->defined == 0
-							)) {
-							yyerrer( "声明类型冲突或定义后重复声明\n" );
+							((lookup( newsymbol, constants ) != NULL)
+							||
+							(lookup( newsymbol, identifiers ) != NULL) && lookup( newsymbol, identifiers )->defined != 0
+							)
+							) {
+							yyerror( "声明类型冲突或定义后重复声明\n" );
 						}
 						else {
 							//开始声明
-							okayToDec( newDecl, type, NULL, ifConst );
+							okayToDec( newDecl, type->ty, NULL, ifConst );
 						}
 					}
 					else if (!strcmp( newDecl->name, "Array" )) {
 						//newDecl = newDecl->l;
-						newsymbol = newDecl->l->name;
+						newsymbol = newDecl->l->idtype;
 						if (
-							!((lookup( newsymbol, constants
-							) == NULL || lookup( newsymbol, constants
-							)->defined == 0)
-							&&
-							(lookup( newsymbol, identifiers
-							) == NULL) || lookup( newsymbol, identifiers
-							)->defined == 0
-							)) {
-							yyerrer( "声明类型冲突或定义后重复声明\n" );
+							((lookup( newsymbol, constants) != NULL)
+							||
+							(lookup( newsymbol, identifiers) != NULL) && lookup( newsymbol, identifiers)->defined != 0
+								)
+							) {
+							yyerror( "声明类型冲突或定义后重复声明\n" );
 						}
 						else {
 							Type ty;
@@ -237,7 +235,7 @@ Tree varDec( Tree type, Tree vl, int ifConst ) {
 									yyerror( "不可用的指数类型\n" );
 								}
 							}
-							okayToDec( varList->l->l, type, NULL, ifConst );
+							okayToDec( varList->l->l, ty, NULL, ifConst );
 						}
 					}
 					
@@ -248,23 +246,18 @@ Tree varDec( Tree type, Tree vl, int ifConst ) {
 				{
 					if (!strcmp( varList->l->l->name, "NAME" )) {
 						//判断是否能够复制
-						newsymbol = varList->l->l->l->name;
+						newsymbol = varList->l->l->idtype;
 						if (
-							!((lookup( newsymbol, constants
-							) == NULL || lookup( newsymbol, constants
-							)->defined == 0)
-							&&
-							(lookup( newsymbol, identifiers
-							) == NULL) || lookup( newsymbol, identifiers
-							)->defined == 0
-							)) {
-							yyerrer( "声明类型冲突或定义后重复声明\n" );
+							((lookup( newsymbol, constants ) != NULL)
+							||
+							(lookup( newsymbol, identifiers ) != NULL) && lookup( newsymbol, identifiers )->defined != 0
+							)
+							) {
+							yyerror( "声明类型冲突或定义后重复声明\n" );
 						}
 						else
-							okayToDec( varList->l->l->l, type, varList->l->l->r, ifConst );
-						if (!transferAssignDecl( type, varList )) {
-							yyerror( "失败的类型转换，左右两边操作数不可赋值\n" );
-							}
+							okayToDec( varList->l->l, type->ty, varList->l->l->r, ifConst );
+						
 					}
 					else yyerror( "暂时不支持数组赋值\n" );
 				}
@@ -277,13 +270,38 @@ Tree varDec( Tree type, Tree vl, int ifConst ) {
 	return newNode( "DEC", type, vl,NOP, type->ty->op, ifConst );
 }
 
-void findIfExist( Tree var,Tree type ) {
-	Symbol p = lookup( var->name, &identifiers );
-	if (!p || (p&&p->scope < level)) {
-		p=install( var->name, identifiers );
-		p->type = type;
-		//return 1;
+Symbol findIfExist( Tree var,Tree type ,int ifconst) {
+	if(!strcmp(var->name,"Var")){
+		Symbol p = lookup( var->idtype, identifiers );
+		if (!p || (p&&p->scope < level)) {
+			p = install( var->idtype, &identifiers, level );
+			p->type = type->ty;
+			p->ifconst = ifconst;
+				identificaionOffset += 1;
+				p->offset = identificaionOffset - 1;
+			p->defined = 0;
+			return p;
+		}
+		else {
+			yyerror( "声明重复\n" );
+		}
 	}
+	else if( !strcmp( var->name, "Array" ) ) {
+		Symbol p = lookup( var->l->idtype, identifiers );
+		if (!p || (p&&p->scope < level)) {
+			p = install( var->l->idtype, &identifiers, level );
+			p->type = arrayType(type->ty, var->r-> u.i );
+			identificaionOffset += type->ty->size / type->ty->type->size;
+			p->offset = identificaionOffset - type->ty->size / type->ty->type->size;
+			p->defined = 0;
+			p->ifconst = ifconst;
+			return p;
+		}
+		else {
+			yyerror( "声明重复\n" );
+		}
+	}
+	
 	else {
 		yyerror( "声明重复\n" );
 	}
@@ -297,37 +315,54 @@ Tree funcDef(Tree type,Tree name,Tree args,int ifconst,Tree explist ) {
 	Tree aftReturn = NULL;
 
 	//检查是否存在
-	if (lookup( name->idtype, identifiers )&& lookup( name->idtype, identifiers )->type->op==FUNCTION && lookup( name->idtype, identifiers )->defined == 1) {
+	if (lookup( name->idtype, identifiers ) && (lookup( name->idtype, identifiers )->defined == 1)) {
 		yyerror( "函数定义已存在\n" );
 	}
-	Type *proto;
-	int i = 0;
-	Tree fundec = args;
-	while (fundec != NULL) {
-		i += 1;
-		fundec = fundec->r;
-	}
-	proto = (Type*)malloc( i * sizeof( Type ) );
-	proto[i] = NULL;
-	fundec = args;
-	level += 1;
-	for (int n = 0;n < i;n++) {
-		findIfExist( fundec->l->l->r, fundec->l->l->l );
-		proto[n] = fundec->l->l->l->ty;
-		if (fundec->l->l->l->type == 0)
-			proto[n]->op = CONST;
-	}
-	level -= 1;
+	//如果函数未被定义且此时为函数定义
 	
-	Tree aftReturn=NULL;
-	if (type->ty->op != VOID) {
-		aftReturn = newNode( "PUSH", NULL, NULL, PUSH, name->type, 3 );
-	}
-	Tree nop = newNode( "nop", explist, aftReturn, CALL, name->ty, 2 );
-	Tree addrl = newNode( "function", nop, aftReturn, NOP, name->ty, 2 );
-	addrl->ty=func( type->type, proto );
-	level += 1;
-	return addrl;
+		Type *proto;
+		int size = 0;
+		Tree fundec = args;
+		int i = 0;//计算参数的个数
+		while ( !strcmp(fundec->name,"funcDecList")|| !strcmp( fundec->name,"funcDec" )) {
+			i += 1;
+			fundec = fundec->r;
+		}
+		fundec = args;
+		proto = (Type*)malloc( i * sizeof( Type ) );
+		proto[i] = NULL;//函数末尾为0
+		for (int n = 0;n < i;n++) {
+			Symbol cur = findIfExist( fundec->l->l->l, fundec->l->l->r, fundec->l->l->type );
+			proto[n] = cur->type;
+			proto[n]->u.sym = cur;
+			if (cur->ifconst)
+				proto[n]->op = CONST;
+		}
+			//此处可以省略size,因为offsize在install中更新
+			Type newFunc = func( type->ty, proto );
+			newFunc->u.f.funcSize = identificaionOffset;
+			newFunc->u.f.args = i;
+			install( name->idtype, &identifiers, GLOBAL );
+			lookup( name->idtype, identifiers )->type = newFunc;
+			if (type->ty->op != VOID) {
+				aftReturn = newNode( "PUSH", NULL, NULL, PUSH, name->type, 3 );
+			}
+			Tree nop = newNode( "nop", args, explist, NOP, name->opType, 2 );
+			Tree addrl=newNode( "function", nop, aftReturn, NOP, name->opType, 2 );
+			/*
+			制造四元式！*/
+			if(explist!=NULL){
+				if (!strcmp(name->idtype,"main"))
+				{
+					expGen( explist, 0, midMainUpdate(  newFunc ) );
+				}
+				else
+					expGen(explist,0 ,  midCurUpdate( name->idtype,newFunc ));
+				printf( "生成%s的四元式\n", name->idtype );
+			}
+			
+			return addrl;
+
 }
 
 

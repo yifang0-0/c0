@@ -1,4 +1,4 @@
-
+/*
 #include "func.h"
 #define VAR_HASH_SIZE 11
 #define VAR_HASH_SHIFT 4
@@ -81,3 +81,4 @@ struct ifo* varNotExist( struct ast * a )
 
 
 
+*/

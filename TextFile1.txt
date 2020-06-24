@@ -68,3 +68,40 @@
 		}				
 				∑µªÿ÷µ‘⁄”“≤‡
 */
+
+
+int main(){int a=2;a=a+i;}
+
+^Z
+syntax tree:
+ExtDefList
+|__DEC
+|  |__TYPE :int
+|  |__varList
+|     |__Var
+|        |__NAME :i
+|__ExtDefList
+|  |__function
+|  |  |__nop
+|  |  |  |__STATELIST
+|  |  |     |__STATE
+|  |  |        |__DefList
+|  |  |           |__DEC
+|  |  |              |__TYPE :int
+|  |  |              |__varList
+|  |  |                 |__ASSIGN
+|  |  |                    |__NAME :a
+|  |  |                    |__CNST
+|  |  |     |__STATELIST
+|  |  |        |__ASSIGN
+|  |  |        |  |__INDIREXP
+|  |  |        |     |__NAME :a
+|  |  |        |  |__ADD
+|  |  |        |     |__INDIREXP
+|  |  |        |        |__NAME :a
+|  |  |        |     |__INDIREXP
+|  |  |        |        |__NAME :i
+|  |  |        |__STATELIST
+|  |  |__PUSH
+|  |__ExtDefList
+syntax tree!

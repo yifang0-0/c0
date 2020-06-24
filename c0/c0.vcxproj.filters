@@ -14,9 +14,6 @@
     <ClCompile Include="func.c" />
     <ClCompile Include="cutoff_ast.c" />
     <ClCompile Include="cutoff.tab.c" />
-    <ClCompile Include="lex.yy.c" />
-    <ClCompile Include="alloc.c" />
-    <ClCompile Include="dag.c" />
     <ClCompile Include="list.c" />
     <ClCompile Include="string.c" />
     <ClCompile Include="types.c" />
@@ -29,15 +26,15 @@
     <ClCompile Include="statements.c" />
     <ClCompile Include="generate.c" />
     <ClCompile Include="statement.c" />
+    <ClCompile Include="lex.yy.c" />
+    <ClCompile Include="assamble.c" />
+    <ClCompile Include="trans.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="func.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="dataStructure.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="cutoff_ast.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="cutoff.tab.h">
@@ -47,6 +44,15 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="types.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="statement.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="exp.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="assamble.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

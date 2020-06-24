@@ -19,16 +19,19 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="alloc.c" />
+    <ClCompile Include="assamble.c">
+      <DeploymentContent>true</DeploymentContent>
+      <FileType>CCode</FileType>
+    </ClCompile>
     <ClCompile Include="cutoff.tab.c" />
     <ClCompile Include="cutoff_ast.c" />
-    <ClCompile Include="dag.c" />
     <ClCompile Include="func.c" />
     <ClCompile Include="generate.c" />
     <ClCompile Include="lex.yy.c" />
     <ClCompile Include="list.c" />
     <ClCompile Include="statement.c" />
     <ClCompile Include="string.c" />
+    <ClCompile Include="trans.c" />
     <ClCompile Include="types.c" />
     <ClCompile Include="sym.c" />
     <ClCompile Include="源.cpp" />
@@ -37,17 +40,20 @@
     <ClCompile Include="statements.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="assamble.h" />
     <ClInclude Include="c.h" />
     <ClInclude Include="cutoff.tab.h" />
-    <ClInclude Include="cutoff_ast.h" />
     <ClInclude Include="dataStructure.h" />
+    <ClInclude Include="exp.h" />
     <ClInclude Include="func.h" />
+    <ClInclude Include="statement.h" />
     <ClInclude Include="types.h" />
   </ItemGroup>
   <ItemGroup>
     <Flex Include="cutoff.l">
       <OutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">lex.yy.c</OutputFile>
       <OutputFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">lex.yy.c</OutputFile>
+      <DeploymentContent>true</DeploymentContent>
     </Flex>
   </ItemGroup>
   <ItemGroup>

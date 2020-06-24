@@ -53,7 +53,7 @@ extern int yydebug;
      STRUCT = 262,
      TYPEDEF = 263,
      BREAK = 264,
-     CONST = 265,
+     CONSTLEX = 265,
      UNION = 266,
      RETURN = 267,
      IF = 268,
@@ -66,28 +66,40 @@ extern int yydebug;
      COMMA = 275,
      ASSIGN = 276,
      RELOP = 277,
-     ADD = 278,
-     SIZEOF = 279,
-     UNSIGNED = 280,
-     SUB = 281,
-     STAR = 282,
-     DIV = 283,
-     AND = 284,
-     OR = 285,
-     DOT = 286,
-     NOT = 287,
-     LP = 288,
-     RP = 289,
-     LB = 290,
-     RB = 291,
-     LSB = 292,
-     RSB = 293,
-     PS = 294,
-     DS = 295,
-     AERROR = 296,
-     TRUE = 297,
-     FALSE = 298,
-     EOL = 299
+     ADDLEX = 278,
+     MODLEX = 279,
+     SIZEOFLEX = 280,
+     UNSIGNEDLEX = 281,
+     SUBLEX = 282,
+     STARLEX = 283,
+     DIVLEX = 284,
+     ANDLEX = 285,
+     ORLEX = 286,
+     BANDLEX = 287,
+     BORLEX = 288,
+     BXORLEX = 289,
+     NOTLEX = 290,
+     LP = 291,
+     RP = 292,
+     LB = 293,
+     RB = 294,
+     LSB = 295,
+     RSB = 296,
+     PS = 297,
+     DS = 298,
+     AERROR = 299,
+     TRUE = 300,
+     FALSE = 301,
+     VOIDLEX = 302,
+     CONTINUE = 303,
+     DO = 304,
+     ADDRESS = 305,
+     SELFSUB = 306,
+     SWITCH = 307,
+     EOL = 308,
+     FALSELEX = 309,
+     TRUELEX = 310,
+     DOT = 311
    };
 #endif
 
@@ -96,14 +108,14 @@ extern int yydebug;
 typedef union YYSTYPE
 {
 /* Line 2058 of yacc.c  */
-#line 20 "cutoff.y"
+#line 19 "cutoff.y"
 
 struct ast* a;
 double d;
 
 
 /* Line 2058 of yacc.c  */
-#line 107 "cutoff.tab.h"
+#line 119 "cutoff.tab.h"
 } YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */

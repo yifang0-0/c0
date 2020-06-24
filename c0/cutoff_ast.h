@@ -1,8 +1,13 @@
 /* 定义抽象语法树 */
 /*interface with flex*/
-
-# include "dataStructure.h"
-
+#pragma once
+#include <string.h>
+# include<stdlib.h>
+#include"stdbool.h"
+# include<stdio.h>
+# include<stdarg.h>
+#include "limits.h"
+# include "c.h"
 extern char* yytext;
 extern int yylineno;
 void yyerror( const char *s, ... );
@@ -13,6 +18,7 @@ void treefree(struct ast *a);
 /* 遍历抽象语法树 */
 double eval(struct ast *a);
 /* 打印抽象语法树的信息 */
-void eval_print(struct ast*a,int level);
+//void eval_print(struct ast*a,int level);
 /* 如何存储数组？type=int/float/char 从地址取值 */
 //Tree findTheRight( const char*name, int op, int num, ... );
+int hash( char * key, int HASH_SHIFT, int HASH_SIZE );

@@ -1,57 +1,14 @@
 #define sym_HASH_SHIFT 1
-#define sym_HASH_SIZE 256
+#define sym_HASH_SIZE 32
 #include "c.h"
 #define equalp(x)  v.x==p->sym.u.c.v.x
-
-//typedef struct symbol *Symbol;
-//typedef struct table *Table;
-
-//extern Table constants;
-//extern Table externals;
-//extern Table globals;
-//extern Table identifiers;
-//extern Table labels;
-//extern Table types;
-//extern int level;
-//extern Type;
-//int level = GLOBAL;
-
-//typedef struct coord {
-//	char *file;
-//	unsigned x, y;
-//}Coordinate;
-//enum{ CONSTANT = 1,LABLES,GLOBAL,PARAM,LOCAL };
-//
-//struct symbol {
-//			char *name;
-//			int size;
-//			int scope;
-//			Symbol up;
-//			Coordinate src;
-//			Type type;
-//			union {
-//					char* idtype;
-//				int intgr;
-//				double dou;
-//			};
-//};
-//struct table {
-//	int level;
-//	struct entry {
-//		struct entry*link;
-//		struct symbol sym;
-//	}*bucket[256];
-//	Symbol all;
-//	Table previous;
-//};
-
 
 struct table {
 	int level;
 	struct entry {
 		struct entry*link;
 		struct symbol sym;
-	}*buckets[256];
+	}*buckets[32];
 	Symbol all;
 	Table previous;
 };
@@ -64,17 +21,20 @@ tys = { GLOBAL };
 Table constants = &cns;
 Table externals = &ext;
 Table identifiers = &ids;
-Table globals = &ids;
+//Table globals = &ids;
 Table types = &tys;
 Table labels;
 //初始化所有table的level
 //<sys.c function>
+
+
+
 void enterscop( ) {
 	++level;
 }
 
 void exitscope( ) {
-	rmtypes( level );
+	rmtype( level );
 	if (types->level == level)
 		types = types->previous;
 	if (identifiers->level == level)
@@ -83,15 +43,15 @@ void exitscope( ) {
 }
 
 //创建标志符
-Symbol install( char*name, Table*tpp, int level, int arena ) {
+Symbol install( char*name, Table*tpp, int level ) {
 	Table tp = *tpp;
-	struct entry *p;
-	unsigned h = (unsigned)hash( name, 1, 256 );
+	struct entry*p = (struct entry*)malloc( sizeof( struct entry ) );;
+	unsigned h = (unsigned)hash( name, sym_HASH_SHIFT, sym_HASH_SIZE );
 	if (level > 0 && tp->level < level)
 	{//如果不在同一层则需要新建立一系列表
 		tp = *tpp = table( tp, level );
 	}
-	NEW0( p, arena );
+	//p = (struct entry*)malloc( sizeof( struct entry ) );
 	p->sym.name = name;
 	p->sym.scope = level;
 	p->sym.up = tp->all;
@@ -100,50 +60,21 @@ Symbol install( char*name, Table*tpp, int level, int arena ) {
 	tp->buckets[h] = p;
 	return &p->sym;
 }
-
+//void initTable( )
 Table table( Table tp, int level ) {
-	Table new;
-	NEW0( new, 1 );//给fun类型表分配的空间默认是第二块
-	new->previous = tp;
-	new->level = tp->level + 1;
-	if (tp)new->all = tp->all;
-	else new->all = NULL;
-	return new;
+	Table newTb;
+	newTb = (Table)malloc( sizeof( Table ) );//给fun类型表分配的空间默认是第二块
+	int i = 0;
+	for( i = 0;i < sym_HASH_SIZE;i++ ){
+		newTb->buckets[i] = NULL;
+	}
+	newTb->previous = tp;
+	newTb->level = tp->level + 1;
+	if (tp)newTb->all = tp->all;
+	else newTb->all = NULL;
+	return newTb;
 }
-//添加列表节点
-//void buildNewVar( Table tp, int lev, Symbol s ) {
-//	while (tp&&tp->level > lev) {
-//		tp = tp->previous;
-//		//找到symbol所属的level
-//	}
-//	int hashCode = hash( s->name );
-//	if (tp&&tp->level == lev) {
-//		Symbol p;
-//		Coordinate sav;
-//		//sav = s->src;
-//		p = tp->all;
-//		if (tp->bucket[hashCode]) {
-//			while (p) {
-//				if (p->name == s->name) {
-//					error( "重复定义" );
-//					exit( 1 );
-//				}
-//				p = p->up;
-//			}
-//		}
-//		Table tpSameLevel = tp;
-//		tp = tp->previous;
-//		Symbol sCurLevel = tp->all;
-//		//在当前这一层没有函数定义，如果在之前找到，需要从这一层已经定义的变量末尾用s->up连接
-//		tp = tpSameLevel;
-//		sCurLevel = tp;
-//		s->up =
-//			sCurLevel->up = s;
-//		if (tp->bucket[hashCode] == NULL) {
-//			tp->bucket[hashCode] = s;
-//		}
-//	}
-//}
+
 Symbol SymbolExist( Table tp, char*name ){
 	struct entry* p;
 	
@@ -168,12 +99,9 @@ Symbol constant( Type ty, Value v )
 	for (p = constants->buckets[h];p;p = p->link) {
 		if (eqtype( ty, p->sym.type, 1 )) {
 			switch (ty->op) {
-			case CHAR: if (equalp( sc )) return &p->sym;break;
-			case SHORT: if (equalp( ss )) return &p->sym;break;
+			case CHAR: if (equalp( sc )) return &p->sym;break;		
 			case INT: if (equalp( i )) return &p->sym;break;
 			case UNSIGNED: if (equalp( u )) return &p->sym;break;
-			case FLOAT: if (equalp( f )) return &p->sym;break;
-			case DOUBLE: if (equalp( d )) return &p->sym;break;
 			case ARRAY:
 			case FUNCTION:
 			case POINTER:if (equalp( p )) return &p->sym;break;			
@@ -181,11 +109,10 @@ Symbol constant( Type ty, Value v )
 			}
 		}
 	}
-	NEW0( p, PERM );
+	p = (struct entry*)malloc( sizeof( struct entry ) );
 	p->sym.name = vtoa( ty, v );
 	p->sym.scope = CONSTANT;
 	p->sym.type = ty;
-	p->sym.sclass = STATIC;
 	p->sym.u.c.v = v;
 	p->sym.up = constants->buckets[h];
 	p->link = constants->all;
@@ -200,33 +127,18 @@ Symbol constant( Type ty, Value v )
 Symbol intconst( int n ) {
 	Value v;
 	v.i = n;
-	constant( inttype, v );
-}
-Symbol doubleconst( double n ) {
-	Value v;
-	v.d = n;
-	constant( doubletype, v );
+	return constant( inttype, v );
 }
 
-Symbol genlable( int i ) {
-	static int label = 1;
+Symbol allsymbols( Table tp ) {
+	return tp->all;
+}
+int genlabel( int i ) {
+	//static int label = 1;
 	label += i;
 	return label - i;
-
 }
 
-Symbol genident( int scals, int lev, Type ty ) {
-	Symbol p;
-	NEW0( p, lev >= LOCAL ? FUNC : PERM );
-	p->name = stringd( genlable( 1 ) );
-	p->scope = lev;
-	//p->SCLASS = scls;
-	p->type = ty;
-	p->generated = 1;
-	//if (lec=GLOBAL)
-	//	(*IR->defsymbol)(p);
-	return p;
-}
 
 Symbol temporary( int scals, int lev, Type ty ) {
 	Symbol p = genident( scals, lev, ty );
@@ -234,14 +146,9 @@ Symbol temporary( int scals, int lev, Type ty ) {
 	return p;
 }
 
-Symbol newtemp( int scals, int tc ) {
-	Symbol p = temporary( scals,LOCAL, btot(tc) );
-	(*IR->local)(p);
-	p->defined = 1;
-	return p;
-}
 
-unsigned hash( char*name, unsigned  HASH_SHIFT, unsigned HASH_SIZE ) {
+
+int hash( char*name, int  HASH_SHIFT, int HASH_SIZE ) {
 	unsigned temp = 0;
 	unsigned i = 0;
 	while (name[i] != '\0')
@@ -254,20 +161,131 @@ unsigned hash( char*name, unsigned  HASH_SHIFT, unsigned HASH_SIZE ) {
 
 Symbol lookup( const char *name, Table tp ) {
 	struct entry *p;
-	unsigned h = (unsigned long)name&(sym_HASH_SIZE - 1);
+	unsigned h = (unsigned)hash( name, sym_HASH_SHIFT, sym_HASH_SIZE );
 	do
 		for (p = tp->buckets[h]; p; p = p->link)
-			if (name == p->sym.name)
-				return &p->sym;
+			if (strcmp(name , p->sym.name)==0)
+				return &(p->sym);
 	while ((tp = tp->previous) != NULL);
 	return NULL;
 }
 
 Symbol firstInit( char*name) {
-	Symbol sym;
+	Symbol sym=(Symbol)malloc(sizeof(struct symbol));
 	sym->name = name;
 	sym->defined = 0;
-	sym->src.file = file;
-	sym->src.x = lineno;
+	
+	sym->src.x = yylineno;
 	return sym;
+}
+char *vtoa( Type ty, Value v ) {
+	char buf[50];
+
+	ty = unqual( ty );
+	switch (ty->op) {
+	case INT:      return stringd( v.i );/*
+	case UNSIGNED: return stringf( (v.u&~0x7FFF) ? "0x%X" : "%U", v.u );
+	case FLOAT:    return stringf( "%g", (double)v.d );
+	case ARRAY:
+		if (ty->type == chartype 
+			 || ty->type == unsignedchartype)
+			return v.p;
+		return stringf( "%p", v.p );
+	case POINTER:  return stringf( "%p", v.p );
+	//case FUNCTION: return stringf( "%p", v.g );*/
+	}
+	 return NULL;
+}
+Symbol genident( int scls, Type ty, int lev ) {
+	Symbol p;
+	p = (Symbol)malloc( sizeof( struct symbol ) );
+	p->name = stringd( genlabel( 1 ) );
+	p->scope = lev;
+	p->sclass = scls;
+	p->type = ty;
+	p->generated = 1;
+
+	return p;
+}
+void subprintfArrayValue( FILE *fpWrite, int op, struct entry* p ) {
+	 fprintf( fpWrite, "    %s", p->sym.name );
+}
+void subprintfValue( FILE *fpWrite, int op, struct entry* p ) {
+	switch (op) {
+	case CHAR: fprintf( fpWrite, "db /'%c/'/n", p->sym.u.c.v.sc );break;
+	case UNSIGNEDCHAR:
+		fprintf( fpWrite, "db %x/n", p->sym.u.c.v.uc );break;
+	case INT: fprintf( fpWrite, "dd %x/n", p->sym.u.c.v.i );break;
+	case UNSIGNED: fprintf( fpWrite, "dd %x/n", p->sym.u.c.v.u );break;
+	//case ARRAY:  subprintfConstantValue( fpWrite, op,  p )
+	}
+}
+
+void subConstantPrintf( FILE *fpWrite ,int op,struct entry* p) {
+	if(p->sym.defined){
+		fprintf( fpWrite, "    %s", p->sym.name );
+		subprintfValue( fpWrite, op, p );
+	}
+}
+void subIdentifiersPrintf( FILE *fpWrite, int op, struct entry* p ) {
+	if (p->sym.defined==0) {
+		fprintf( fpWrite, "    ?%s", p->sym.name );
+		switch (op) {
+		case UNSIGNEDCHAR:
+		case CHAR: fprintf( fpWrite, "resb 1/n");break;
+		
+		case INT: 
+		case UNSIGNED: fprintf( fpWrite, "resd 1/n" );break;
+
+		case ARRAY:switch (p->sym.type->op) {
+			case UNSIGNEDCHAR:
+			case CHAR: fprintf( fpWrite, "resb %d/n", p->sym.type->size );break;
+
+			case INT:
+			case UNSIGNED: fprintf( fpWrite, "resd %d/n", p->sym.type->size/4);break;
+
+			//case ARRAY:  subprintfConstantValue( fpWrite, op,  p )
+		}
+			//case ARRAY:  subprintfConstantValue( fpWrite, op,  p )
+		}
+	}
+}
+
+void printfGlobal( FILE *fpWrite,Table tbb ,int level) {
+	struct entry *p=allsymbols( tbb );
+	//struct entry *p;
+	while (p) {
+		//数组
+		//name times n 初始值 我秃了，数组咋搞
+		//name 
+		//dd 1h
+		//dd 2h
+		//dd 3h
+		//......
+		//非数组
+		//name db/dw/dd 值
+		int op = p->sym.type->op;
+		subConstantPrintf( fpWrite, op, p );
+		p = p->link;
+	}
+
+}
+void printfidentifiers( FILE *fpWrite, Table tbb, int level ) {
+	struct entry *p = allsymbols( tbb );
+	//struct entry *p;
+	while (p) {
+		//数组
+		//name times n 初始值 我秃了，数组咋搞
+		//name 
+		//dd 1h
+		//dd 2h
+		//dd 3h
+		//......
+		//非数组
+		//name db/dw/dd 值
+		int op = p->sym.type->op;
+		subIdentifiersPrintf( fpWrite, op, p );
+		p = p->link;
+	}
+
 }
