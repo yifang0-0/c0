@@ -173,33 +173,78 @@ if(!strcmp(nade->name,"LABEL")
 	",node->intgr);
 	%d:\n\
 */
-  
-  struct mid* expGen(Tree expOp,int ifeax , struct mid* m) {
+  struct mid* curMid;
+  struct mid* expGen( Tree expOp, int ifeax, struct mid* m ) {
+	  //如果子节点为叶节点
+	  if (expOp != NULL) {
+		  if (expOp->l != NULL) {
+
+			  if (expOp->l->opPr == NOP) expGen( expOp->l, ifeax, m );
+			  else expGen( expOp->l, 1, m );
+
+		  }
+		  if (expOp->r != NULL) {
+
+			  if (expOp->r->opPr == NOP) expGen( expOp->r, ifeax, m );
+			  else expGen( expOp->r, 0, m );
+
+		  }
+		  return opMidGen( expOp, ifeax, m );
+	  }
+	  return NULL;
+
+  }
+/*
+   struct mid* expGen(Tree expOp,int ifeax , struct mid* m) {
+		//如果子节点为叶节点
+	  if(expOp!=NULL){
+		  if (expOp->l != NULL) {
+
+			  if (expOp->l->opPr == NOP) expGen( expOp->l, ifeax, m );
+			  else opMidGen( expOp->l, 1, m );
+
+		  }
+		  if (expOp->r != NULL) {
+			 
+				  if (expOp->r->opPr == NOP) expGen( expOp->r, ifeax, m );
+				  else expGen( expOp->r, 0, m );
+			 
+		  }
+		  return opMidGen( expOp, ifeax, m );
+	  }
+	  return NULL;
+	  
+}
+ */
+  /*
+   struct mid* expGen(Tree expOp,int ifeax , struct mid* m) {
 		//如果子节点为叶节点
 	  if (expOp->l != NULL) {
 		  if (expOp->l->opPr!=NOP||(expOp->l->l != NULL || expOp->l->r != NULL)) {
-			  if(expOp->l->opPr==NOP)m = expGen( expOp->l, ifeax, m );
-			  else m=expGen( expOp->l,1 ,m);
+			  if(expOp->l->opPr==NOP) expGen( expOp->l, ifeax, m );
+			  else opMidGen( expOp->l, 1, m);
 		  }
 	  }
 	  if(expOp->r != NULL) {
 		  if (expOp->r->opPr != NOP ||( expOp->r->l != NULL || expOp->r->r != NULL)) {
-			  if (expOp->r->opPr == NOP)m = expGen( expOp->r, ifeax, m );
-			  else m=expGen( expOp->r,0,m );
+			  if (expOp->r->opPr == NOP) expGen( expOp->r, ifeax, m );
+			  else expGen( expOp->r,0,m );
 		  }
 	  }
 	  return opMidGen( expOp, ifeax,m );
-}
-
-struct mid* opMidGen(Tree midOp,int ifeax, struct mid* newMid ) {
+}*/
+struct mid* opMidGen(Tree midOp,int ifeax, struct mid* m ) {
 	  //如果当前节点操作符是NOP（不生成）
 	  //INDIR CNST
 	  //如果是操作符 二元
-	  if (midOp->opPr == NOP)return newMid;
-	  struct mid* m = (struct mid*)malloc( sizeof( struct mid ) );
-	  newMid->next = m;
+	printf(  "%s\n", midOp->name );
+	  if (midOp->opPr == NOP)return m;
+	  struct mid* newMid = (struct mid*)malloc( sizeof( struct mid ) );
+	  //newMid->next = m;
 	  newMid->opNUM = midOp->opPr;
-	  m->next = NULL;
+	  newMid->next = NULL;
+	  curMid->next = newMid;
+	  curMid = newMid;
 	  //newMid->opNUM = midOp->name;
 	  if (newMid->opNUM == CALL) {
 	  //如果是call
@@ -317,7 +362,8 @@ struct mid* opMidGen(Tree midOp,int ifeax, struct mid* newMid ) {
 		  else if (!strcmp( midOp->name, "INDIREXP" )) {//本地变量
 			  newMid->op = "movebp";
 			  newMid->op2 ="0ebp";//常量可以通过名字直接取得
-			  newMid->op2Offset = lookup( newMid->op2, identifiers )->offset;
+			  
+			  newMid->op2Offset = midOp->offset;
 			  newMid->op2Size = regsize[midOp->opType];
 		  }
 		  else{
@@ -339,7 +385,7 @@ struct mid* opMidGen(Tree midOp,int ifeax, struct mid* newMid ) {
 			  newMid->op1Offset = midOp->r->offset;
 		  }
 		  else
-		  newMid->op1 = "edx";
+			 newMid->op1 = "edx";
 		  newMid->op1Size = regsize[midOp->opType];
 		  newMid->op2 = NULL;
 		  newMid->op2Size = 0;
@@ -349,7 +395,7 @@ struct mid* opMidGen(Tree midOp,int ifeax, struct mid* newMid ) {
 	  //两操作数
 	  else if (newMid->opNUM <= SUB&& newMid->opNUM > NEG) {
 		  //最后是否要交换eax\edx内容由ifeax决定
-		  newMid->op = midOp->idtype;
+		  newMid->op = midOp->name;
 		  //先判断第一个
 		  if (midOp->l->opPr!=INDIR) {
 			  newMid->op1 = "0ebp";
@@ -365,7 +411,7 @@ struct mid* opMidGen(Tree midOp,int ifeax, struct mid* newMid ) {
 			  newMid->op2Offset = midOp->r->offset;
 		  }
 		  else {
-			  newMid->op1 = "edx";
+			  newMid->op2 = "edx";
 			  newMid->op2Offset = 0;
 			  //自己取得放到edx
 		  }
@@ -379,26 +425,38 @@ struct mid* opMidGen(Tree midOp,int ifeax, struct mid* newMid ) {
 		  newMid->op = "assign";
 		  if (!strcmp( midOp->l->name, "INDIRNAME" )) {
 			  //全局变量可通过名字读取
+			  if(midOp->l->l==NULL)
 			  newMid->op1 = midOp->l->idtype;
+			  else
+				  newMid->op1 = midOp->l->l->idtype;
 		  }
 		  else if (!strcmp( midOp->l->name, "INDIREXP" )) {
 			  //本地变量通过ebp+offet读取
 			  newMid->op1 ="0ebp";
-			  newMid->op2Offset = lookup( midOp->l->idtype, identifiers )->offset;
+			  newMid->op1Offset =midOp->l->offset;
 		  }
-		  if (!strcmp( midOp->r->name, "INDIRNAME" )|| !strcmp( midOp->l->name, "INDIREXP" )|| !strcmp( midOp->l->name, "CNST" )) {
+		  if (!strcmp( midOp->r->name, "INDIRNAME" )) {
 			  //已经进行过处理，存放在edx中
+			  newMid->op2 = midOp->r->idtype;
 		  }
-		  else  {
+		  else if(!strcmp( midOp->r->name, "INDIREXP" )) {
 			  //右边是表达式
 			  newMid->op2 = "0ebp";
-			  newMid->op2Offset = midOp->offset;
+			  newMid->op2Offset = midOp->r->offset;
 			  //自己取得放到edx
 		  }
-		  newMid->op1 = midOp->l->idtype;
-		  newMid->op1Size = regsize[midOp->opType];
-		  newMid->op2Size = newMid->op1Size;
-		  newMid->op2 = "reg";//右边的传入
+		  else if (!strcmp( midOp->r->name, "CNST" )) {
+			  newMid->op2 = "imm";
+			  newMid->op2Size=midOp->r->intgr;
+		  }
+		  else {
+			  //右边是表达式
+			  newMid->op2 = "0ebp";
+			  newMid->op2Offset = midOp->r->offset;
+			  //自己取得放到edx
+		  }
+		  //newMid->op1Size = regsize[midOp->opType];
+		  //newMid->op2Size = newMid->op1Size;
 		  newMid->ifeax = ifeax;//如果ifeax为真，需要先把mov edx->eax,再eax到相应地点
 		
 	  }
@@ -471,19 +529,23 @@ struct mid* opMidGen(Tree midOp,int ifeax, struct mid* newMid ) {
 	 funcName = (char*)malloc( 4*sizeof(char) );
 	 strcpy(funcName,"main");
 	 Type funcType=midAll->funcType;
-	 generateFuncHead( fpWrite ,funcType->u.f.funcSize);
-	 struct midrest* otherFuncMid= midAll->midRest;
-	 midEqual = otherFuncMid->func;
-	 funcName = otherFuncMid->funcName;
-	 funcType = otherFuncMid->funcType;
-	 while(otherFuncMid!=NULL){
+	// generateFuncHead( fpWrite ,funcType->u.f.funcSize);
+	 scanMainEqual(  funcType, midEqual,fpWrite );
+	 if (midAll->midRest != NULL) {
+		 struct midrest* otherFuncMid = midAll->midRest;
 		 midEqual = otherFuncMid->func;
 		 funcName = otherFuncMid->funcName;
 		 funcType = otherFuncMid->funcType;
-		 scanMainEqual( funcType, midEqual, fpWrite );
-		 printf( "\nend\n" );
+		 while (otherFuncMid != NULL) {
+			 midEqual = otherFuncMid->func;
+			 funcName = otherFuncMid->funcName;
+			 funcType = otherFuncMid->funcType;
+			 fprintf( fpWrite, "%s:\n" ,funcName);
+			 generateFuncHead( fpWrite, funcType->u.f.funcSize );
+			 scanMainEqual( funcType, midEqual, fpWrite );
+			 //printf( "\nend\n" );
+		 }
 	 }
-
 }
  void scanMainEqual( Type funcType, struct mid* midEqual , FILE * fpWrite ) {
 	 char* op;
@@ -506,7 +568,7 @@ struct mid* opMidGen(Tree midOp,int ifeax, struct mid* newMid ) {
 			 fprintf( fpWrite, "    mov [ebp-%d][ebp+%d]\n", offset * 4, 8 + a * 4 );
 		 }
 	 }
-	 struct mid *cur = midEqual;
+	 struct mid *cur = midEqual->next;
 	 while (cur) {
 		 op = cur->op;
 		 opNUM = cur->opNUM;
@@ -519,8 +581,9 @@ struct mid* opMidGen(Tree midOp,int ifeax, struct mid* newMid ) {
 		 next = cur->next;
 		 ifeax = cur->ifeax;
 		 resultOffset = cur->resultOffset;
+		 fprintf( fpWrite, ";%s\n", op );
 		 if (!strcmp( op, "call" )) {
-			 fprintf( fpWrite, "    call %s\n", op );
+			 fprintf( fpWrite, "    call %s\n", op1 );
 			 if (op1Offset > 0)
 				 fprintf( fpWrite, "    add esp,%d\n", op1Offset * 4 );
 			 if (funcType->type != NULL)
@@ -535,15 +598,15 @@ struct mid* opMidGen(Tree midOp,int ifeax, struct mid* newMid ) {
 		 }
 		 else if (!strcmp( op, "ret" )) {
 			 if (!strcmp( op1, "retmov" ))
-				 fprintf( fpWrite, "   mov ebx,[ebp-%d]\n", op1Offset );
+				 fprintf( fpWrite, "   mov ebx,[ebp-%d]\n", op1Offset*4 );
 			 fprintf( fpWrite, "   leave\n" );
 			 fprintf( fpWrite, "   ret\n" );
 		 }
 		 else if (!strcmp( op, "movebp" )) {//
 			 if (ifeax)
-				 fprintf( fpWrite, "   mov eax,[ebp-%d]\n", op1Offset );
+				 fprintf( fpWrite, "   mov eax,[ebp-%d]\n", op2Offset*4 );
 			 else
-				 fprintf( fpWrite, "   mov edx,[ebp-%d]\n", op1Offset );
+				 fprintf( fpWrite, "   mov edx,[ebp-%d]\n", op2Offset *4);
 		 }
 		 else if (!strcmp( op, "movname" )) {//
 			 if (ifeax)
@@ -559,7 +622,7 @@ struct mid* opMidGen(Tree midOp,int ifeax, struct mid* newMid ) {
 		 }
 		 else if (!strcmp( op, "EQ" )) {
 			 if (!strcmp( op1, "ebp" ))
-				 fprintf( fpWrite, "   cmp [ebp-%d],dword 0\n", op1Offset );
+				 fprintf( fpWrite, "   cmp [ebp-%d],dword 0\n", op1Offset*4 );
 			 else fprintf( fpWrite, "   cmp eax,dword 0\n" );
 			 fprintf( fpWrite, "   je .label%d\n", resultOffset );
 		 }
@@ -567,16 +630,9 @@ struct mid* opMidGen(Tree midOp,int ifeax, struct mid* newMid ) {
 			 fprintf( fpWrite, "   jmp .label%d\n", op1Size );
 
 		 }
-		 else if (!strcmp( op, "ADD" )) {
-			 if (ifeax)
-				 fprintf( fpWrite, "   add eax,edx\n" );
-			 else
-				 fprintf( fpWrite, "   add edx,eax\n" );
-
-		 }
 		 else if (!strcmp( op, "arg" )) {
 			 if (!strcmp( op1, "ebp" ))
-				 fprintf( fpWrite, "   push [ebp-%d]\n", op1Offset );
+				 fprintf( fpWrite, "   push [ebp-%d]\n", op1Offset *4);
 			 else
 				 fprintf( fpWrite, "   push edx\n" );
 
@@ -584,10 +640,10 @@ struct mid* opMidGen(Tree midOp,int ifeax, struct mid* newMid ) {
 		 else if (!strcmp( op, "SUB" )) {
 			 //strlwr()
 			 if (!strcmp( op1, "0ebp" )) {
-				 fprintf( fpWrite, "   mov eax,[ebp+%d]\n", op1Offset );
+				 fprintf( fpWrite, "   mov eax,[ebp-%d]\n", op1Offset*4 );
 			 }
 			 if (!strcmp( op2, "0ebp" )) {
-				 fprintf( fpWrite, "   mov edx,[ebp+%d]\n", op2Offset );
+				 fprintf( fpWrite, "   mov edx,[ebp-%d]\n", op2Offset *4);
 			 }
 			 else
 				 fprintf( fpWrite, "   sub eax,edx\n" );
@@ -597,19 +653,19 @@ struct mid* opMidGen(Tree midOp,int ifeax, struct mid* newMid ) {
 		 else if (!strcmp( op, "ADD" )) {
 			 //strlwr()
 			 if (!strcmp( op1, "0ebp" )) {
-				 fprintf( fpWrite, "   mov eax,[ebp+%d]\n", op1Offset );
+				 fprintf( fpWrite, "   mov eax,[ebp-%d]\n", op1Offset *4);
 			 }
 			 if (!strcmp( op2, "0ebp" )) {
-				 fprintf( fpWrite, "   mov edx,[ebp+%d]\n", op2Offset );
+				 fprintf( fpWrite, "   mov edx,[ebp-%d]\n", op2Offset*4 );
 			 }
 
 			 if (!ifeax) {
 				 fprintf( fpWrite, "   add edx,eax\n" );
-				 fprintf( fpWrite, "   mov [ebp+%d],edx\n", resultOffset * 4 );
+				 fprintf( fpWrite, "   mov [ebp-%d],edx\n", resultOffset * 4 );
 			 }
 			 else {
 				 fprintf( fpWrite, "   add eax,edx\n" );
-				 fprintf( fpWrite, "   mov [ebp+%d],eax\n", resultOffset * 4 );
+				 fprintf( fpWrite, "   mov [ebp-%d],eax\n", resultOffset * 4 );
 			 }
 
 
@@ -619,70 +675,90 @@ struct mid* opMidGen(Tree midOp,int ifeax, struct mid* newMid ) {
 		 }
 		 else if (!strcmp( op, "BAND" )) {
 			 if (!strcmp( op1, "0ebp" )) {
-				 fprintf( fpWrite, "   mov eax,[ebp+%d]\n", op1Offset );
+				 fprintf( fpWrite, "   mov eax,[ebp-%d]\n", op1Offset *4);
 			 }
 			 if (!strcmp( op2, "0ebp" )) {
-				 fprintf( fpWrite, "   mov edx,[ebp+%d]\n", op2Offset );
+				 fprintf( fpWrite, "   mov edx,[ebp-%d]\n", op2Offset*4 );
 			 }
 			 if (!ifeax) {
 				 fprintf( fpWrite, "   and edx,eax\n" );
-				 fprintf( fpWrite, "   mov [ebp+%d],edx\n", resultOffset * 4 );
+				 fprintf( fpWrite, "   mov [ebp-%d],edx\n", resultOffset * 4 );
 			 }
 			 else {
 				 fprintf( fpWrite, "   and eax,edx\n" );
-				 fprintf( fpWrite, "   mov [ebp+%d],eax\n", resultOffset * 4 );
+				 fprintf( fpWrite, "   mov [ebp-%d],eax\n", resultOffset * 4 );
 			 }
 		 }
 		 else if (!strcmp( op, "BOR" )) {
 			 //strlwr()
 			 if (!strcmp( op1, "0ebp" )) {
-				 fprintf( fpWrite, "   mov eax,[ebp+%d]\n", op1Offset );
+				 fprintf( fpWrite, "   mov eax,[ebp-%d]\n", op1Offset*4 );
 			 }
 			 if (!strcmp( op2, "0ebp" )) {
-				 fprintf( fpWrite, "   mov edx,[ebp+%d]\n", op2Offset );
+				 fprintf( fpWrite, "   mov edx,[ebp-%d]\n", op2Offset*4 );
 			 }
 			 if (!ifeax) {
 				 fprintf( fpWrite, "   or edx,eax\n" );
-				 fprintf( fpWrite, "   mov [ebp+%d],edx\n", resultOffset * 4 );
+				 fprintf( fpWrite, "   mov [ebp-%d],edx\n", resultOffset * 4 );
 			 }
 			 else {
 				 fprintf( fpWrite, "   or eax,edx\n" );
-				 fprintf( fpWrite, "   mov [ebp+%d],eax\n", resultOffset * 4 );
+				 fprintf( fpWrite, "   mov [ebp-%d],eax\n", resultOffset * 4 );
 			 }
 		 }
 		 else if (!strcmp( op, "BAND" )) {
 			 //strlwr()
 			 if (!strcmp( op1, "0ebp" )) {
-				 fprintf( fpWrite, "   mov eax,[ebp+%d]\n", op1Offset );
+				 fprintf( fpWrite, "   mov eax,[ebp-%d]\n", op1Offset*4 );
 			 }
 			 if (!strcmp( op2, "0ebp" )) {
-				 fprintf( fpWrite, "   mov edx,[ebp+%d]\n", op2Offset );
+				 fprintf( fpWrite, "   mov edx,[ebp-%d]\n", op2Offset*4 );
 			 }
 			 if (!ifeax) {
 				 fprintf( fpWrite, "   and edx,eax\n" );
-				 fprintf( fpWrite, "   mov [ebp+%d],edx\n", resultOffset * 4 );
+				 fprintf( fpWrite, "   mov [ebp-%d],edx\n", resultOffset * 4 );
 			 }
 			 else {
 				 fprintf( fpWrite, "   and eax,edx\n" );
-				 fprintf( fpWrite, "   mov [ebp+%d],eax\n", resultOffset * 4 );
+				 fprintf( fpWrite, "   mov [ebp-%d],eax\n", resultOffset * 4 );
 			 }
 		 }
 		 else if (!strcmp( op, "BNOT" )) {
 			 //strlwr()
 			 if (!strcmp( op1, "0ebp" )) {
-				 fprintf( fpWrite, "   mov eax,[ebp+%d]\n", op1Offset );
+				 fprintf( fpWrite, "   mov eax,[ebp-%d]\n", op1Offset*4 );
 			 }
 			 if (!strcmp( op2, "0ebp" )) {
-				 fprintf( fpWrite, "   mov edx,[ebp+%d]\n", op2Offset );
+				 fprintf( fpWrite, "   mov edx,[ebp-%d]\n", op2Offset*4 );
 			 }
 			 if (!ifeax) {
 				 fprintf( fpWrite, "   not edx,eax\n" );
-				 fprintf( fpWrite, "   mov [ebp+%d],edx\n", resultOffset * 4 );
+				 fprintf( fpWrite, "   mov [ebp-%d],edx\n", resultOffset * 4 );
 			 }
 			 else {
 				 fprintf( fpWrite, "   not eax,edx\n" );
-				 fprintf( fpWrite, "   mov [ebp+%d],eax\n", resultOffset * 4 );
+				 fprintf( fpWrite, "   mov [ebp-%d],eax\n", resultOffset * 4 );
 			 }
+		 }
+		 else if (!strcmp( op, "assign" )) {
+		 //strlwr()
+			 if (!strcmp( op2, "0ebp" )) {
+				 fprintf( fpWrite, "   mov edx,[ebp-%d]\n", op2Offset*4 );
+			 }
+			 else if (!strcmp( op2, "imm" )) {
+				 fprintf( fpWrite, "   mov edx,dword %d\n", op2Size );
+			 }
+			 else {
+				 fprintf( fpWrite, "   mov edx,%s\n", op2 );
+			 }
+			 if (!strcmp( op1, "0ebp" )) {
+				 fprintf( fpWrite, "   mov [ebp-%d],edx\n", op1Offset*4 );
+			 }
+			 else{
+				 fprintf( fpWrite, "   mov [%s],edx\n", op1 );
+			 }
+			 if (ifeax)
+				 fprintf( fpWrite, "   mov eax,edx\n" );
 		 }
 		 else if (!strcmp( op, "mov" )) {
 

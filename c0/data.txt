@@ -1,0 +1,34 @@
+%include "io.asm"
+section .data
+section .bss
+_start:
+    push ebp
+    mov ebp,esp
+    sub esp,12
+;movimm
+   mov edx,dword 2
+;assign
+   mov edx,dword 2
+   mov [ebp-0],edx
+   mov eax,edx
+;movebp
+   mov eax,[ebp-4]
+;movimm
+   mov edx,dword 6
+;assign
+   mov edx,dword 6
+   mov [ebp-4],edx
+   mov eax,edx
+;movebp
+   mov eax,[ebp-0]
+;movebp
+   mov eax,[ebp-0]
+;movebp
+   mov edx,[ebp-4]
+;ADD
+   add edx,eax
+   mov [ebp-8],edx
+;assign
+   mov edx,[ebp-8]
+   mov [ebp-0],edx
+   mov eax,edx

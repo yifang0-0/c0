@@ -190,174 +190,174 @@ Tree exprOPDouble( Tree oprand1, Tree oprand2, Tree op ) {
 			
 		}
 	}
-		else if (!strcmp( op->name, "RELOP" )) {
-			//逻辑比较 
+	else if (!strcmp( op->name, "RELOP" )) {
+		//逻辑比较 
 
-			if (!strcmp( op->idtype, "!=" )) {
-				op->opPr = NE; strcpy( op->name, "NE" );
-			}
-			else if (!strcmp( op->idtype, ">=" )) {
-				op->opPr = GE; strcpy( op->name, "GE" );
-			}
-			else if (!strcmp( op->idtype, ">" )) {
-				op->opPr = GT;strcpy( op->name, "GT" );
-			}
-			else if (!strcmp( op->idtype, "<=" )) {
-				op->opPr = LE; strcpy( op->name, "LE" );
-			}
-			else if (!strcmp( op->idtype, "<" )) {
-				op->opPr = LT; strcpy( op->name, "LT" );
-			}
-			else if (!strcmp( op->idtype, "==" )) {
-				op->opPr = EQ;strcpy( op->name, "EQ" );
-			}
-			else {
-				yyerror( "未知错误\n" );
-			}
-			if (oprand1->type <= 1 && oprand2->type <= 1) {
-				op->r = oprand1->opType < oprand2->opType ? oprand1 : oprand2;
-				op->l = oprand1->opType < oprand2->opType ? oprand2 : oprand1;
-				op->opType = op->l->opType;
-				op->type = 0;//即不能进行赋值操作
-				if (oprand1->opType <= FLOAT && oprand1->opType <= FLOAT)
-				{
-
-					/*if (oprand1->opType != oprand2->opType) {
-						//如果需要类型转换 建立一个新节点 用来类型转换 孩子节点指向待转换值与目标值，CVXX
-					//设置该操作
-						op->l = newNode( "TRA", op->l, NULL, CVC - 1 + op->l->opType, op->r->opType, op->l->type );
-						//op->l = a;
-					}*/
-				}
-				Symbol tempSym = lookup( stringd( temp ), identifiers );
-				if (tempSym == NULL) {
-					tempSym = install( stringd( temp ), &identifiers, level );
-					tempSym->offset = identificaionOffset++;
-					tempSym->temporary = 1;
-
-				}
-				else {
-					//当前临时变量可以复用
-					//好像没什么要做的
-				}
-				temp++;
-				maxTemp = (temp > maxTemp) ? temp : maxTemp;
-				op->offset = tempSym->offset;
-				return op;
-			}
-			else {
-				yyerror( "节点不可操作\n" );
-			}
+		if (!strcmp( op->idtype, "!=" )) {
+			op->opPr = NE; strcpy( op->name, "NE" );
 		}
-		else if (!strcmp( op->name, "BXOR" ) || !strcmp( op->name, "BOR" ) || !strcmp( op->name, "BAND" )) {
-			if (oprand1->type <= 1 && oprand2->type <= 1) {
-				if (!strcmp( op->name, "BXOR" ))op->opPr = BXOR;
-				else if (!strcmp( op->name, "BOR" ))op->opPr = BOR;
-				else if (!strcmp( op->name, "BAND" ))op->opPr = BAND;
-				op->r = oprand1->opType < oprand2->opType ? oprand1 : oprand2;
-				op->l = oprand1->opType < oprand2->opType ? oprand2 : oprand1;
-
-				op->opType = op->r->opType;//op的右操作数是更高级的类型
-				op->type = 0;//即不能进行赋值操作
-				Symbol tempSym = lookup( stringd( temp ), identifiers );
-				if (tempSym == NULL) {
-					tempSym = install( stringd( temp ), &identifiers, level );
-					tempSym->offset = identificaionOffset++;
-					tempSym->temporary = 1;
-
-				}
-				else {
-					//当前临时变量可以复用
-					//好像没什么要做的
-				}
-				temp++;
-				maxTemp = (temp > maxTemp) ? temp : maxTemp;
-				op->offset = tempSym->offset;
-				return op;
-			}
-			else
+		else if (!strcmp( op->idtype, ">=" )) {
+			op->opPr = GE; strcpy( op->name, "GE" );
+		}
+		else if (!strcmp( op->idtype, ">" )) {
+			op->opPr = GT;strcpy( op->name, "GT" );
+		}
+		else if (!strcmp( op->idtype, "<=" )) {
+			op->opPr = LE; strcpy( op->name, "LE" );
+		}
+		else if (!strcmp( op->idtype, "<" )) {
+			op->opPr = LT; strcpy( op->name, "LT" );
+		}
+		else if (!strcmp( op->idtype, "==" )) {
+			op->opPr = EQ;strcpy( op->name, "EQ" );
+		}
+		else {
+			yyerror( "未知错误\n" );
+		}
+		if (oprand1->type <= 1 && oprand2->type <= 1) {
+			op->r = oprand1->opType < oprand2->opType ? oprand1 : oprand2;
+			op->l = oprand1->opType < oprand2->opType ? oprand2 : oprand1;
+			op->opType = op->l->opType;
+			op->type = 0;//即不能进行赋值操作
+			if (oprand1->opType <= FLOAT && oprand1->opType <= FLOAT)
 			{
-				yyerror( "" );
-				return NULL;
-			}
-		}
-		else if (!strcmp( op->name, "ASSIGN" )) {
-			if (!strcmp( oprand1->name, "NAME" )) {
-				//此时处理声明的情况
-				op->r = oprand2;
-				op->l = oprand1;
-				op->opPr = ASGN;
-				op->opType = op->l->opType;//左侧的类型是复制最终类型
-				op->type = 0;//即不能进行赋值操作
-				return op;
-			}
-			else if (oprand1->type == 1 && oprand2->type <= 1) {
-				op->r = oprand2;
-				op->l = oprand1;
-				//如果左侧是一个INDIR，删除该节点，指向其左节点
-				op->opPr = ASGN;
-				op->opType = op->l->opType;//左侧的类型是复制最终类型
-				op->type = 0;//即不能进行赋值操作
+
 				/*if (oprand1->opType != oprand2->opType) {
 					//如果需要类型转换 建立一个新节点 用来类型转换 孩子节点指向待转换值与目标值，CVXX
 				//设置该操作
-					Tree a = newNode( "TRA", op->r, NULL, CVC - 1 + op->r->opType, op->l->opType, op->l->type );
-					//将等于的右侧类型转换为左侧的，可能丢失精度，我不管了
-					op->r = a;
+					op->l = newNode( "TRA", op->l, NULL, CVC - 1 + op->l->opType, op->r->opType, op->l->type );
+					//op->l = a;
 				}*/
-				
-				return op;
 			}
-			else
-			{
-				yyerror( "左值不可赋值或者右值不合理\n" );
-				return NULL;
-			}
-		}
-		else if (!strcmp( op->name, "OR" ) || !strcmp( op->name, "AND" )) {
-			//我得头快要从脖子上掉下来了
-			// ：（
-			//真假值之间的比较
-			//除非是0
-			//否则都是真
-			//cmp
-			//jne/je assLine+2
-			//cmp
-			//assLine+2:提前打好
-			if (oprand1->type <= 1 && oprand2->type <= 1) {
-				op->l = oprand1;
-				op->r = oprand2;
-				op->type = 0;
-				op->opType = CONST;
-				if (!strcmp( op->name, "OR" )) {
-					//建立两个cmp与jump,如果左边为假（cmp op1 0;jne 下二条语句assLine+2;cmp op2 0 ）
-					op->opPr = NE;
-				}
-				else {
-					//建立两个cmp与一个je,如果左边为真（cmp op1 0;je assLine+2下两条语句（跳过下一句）;cmp op2 0 ）
-					op->opPr = EQ;
-				}
-				Symbol tempSym = lookup( stringd( temp ), identifiers );
-				if (tempSym == NULL) {
-					tempSym = install( stringd( temp ), &identifiers, level );
-					tempSym->offset = identificaionOffset++;
-					tempSym->temporary = 1;
+			Symbol tempSym = lookup( stringd( temp ), identifiers );
+			if (tempSym == NULL) {
+				tempSym = install( stringd( temp ), &identifiers, level );
+				tempSym->offset = identificaionOffset++;
+				tempSym->temporary = 1;
 
-				}
-				else {
-					//当前临时变量可以复用
-					//好像没什么要做的
-				}
-				temp++;
-				maxTemp = (temp > maxTemp) ? temp : maxTemp;
-				op->offset = tempSym->offset;
-				return op;
 			}
 			else {
-				yyerror( "变量未定义\n" );
+				//当前临时变量可以复用
+				//好像没什么要做的
 			}
+			temp++;
+			maxTemp = (temp > maxTemp) ? temp : maxTemp;
+			op->offset = tempSym->offset;
+			return op;
+		}
+		else {
+			yyerror( "节点不可操作\n" );
 		}
 	}
+	else if (!strcmp( op->name, "BXOR" ) || !strcmp( op->name, "BOR" ) || !strcmp( op->name, "BAND" )) {
+		if (oprand1->type <= 1 && oprand2->type <= 1) {
+			if (!strcmp( op->name, "BXOR" ))op->opPr = BXOR;
+			else if (!strcmp( op->name, "BOR" ))op->opPr = BOR;
+			else if (!strcmp( op->name, "BAND" ))op->opPr = BAND;
+			op->r = oprand1->opType < oprand2->opType ? oprand1 : oprand2;
+			op->l = oprand1->opType < oprand2->opType ? oprand2 : oprand1;
+
+			op->opType = op->r->opType;//op的右操作数是更高级的类型
+			op->type = 0;//即不能进行赋值操作
+			Symbol tempSym = lookup( stringd( temp ), identifiers );
+			if (tempSym == NULL) {
+				tempSym = install( stringd( temp ), &identifiers, level );
+				tempSym->offset = identificaionOffset++;
+				tempSym->temporary = 1;
+
+			}
+			else {
+				//当前临时变量可以复用
+				//好像没什么要做的
+			}
+			temp++;
+			maxTemp = (temp > maxTemp) ? temp : maxTemp;
+			op->offset = tempSym->offset;
+			return op;
+		}
+		else
+		{
+			yyerror( "" );
+			return NULL;
+		}
+	}
+	else if (!strcmp( op->name, "ASSIGN" )) {
+		if (!strcmp( oprand1->name, "NAME" )) {
+			//此时处理声明的情况
+			op->r = oprand2;
+			op->l = oprand1;
+			op->opPr = ASGN;
+			op->opType = op->l->opType;//左侧的类型是复制最终类型
+			op->type = 0;//即不能进行赋值操作
+			return op;
+		}
+		else if (oprand1->type == 1 && oprand2->type <= 1) {
+			op->r = oprand2;
+			op->l = oprand1;
+			//如果左侧是一个INDIR，删除该节点，指向其左节点
+			op->opPr = ASGN;
+			op->opType = op->l->opType;//左侧的类型是复制最终类型
+			op->type = 0;//即不能进行赋值操作
+			/*if (oprand1->opType != oprand2->opType) {
+				//如果需要类型转换 建立一个新节点 用来类型转换 孩子节点指向待转换值与目标值，CVXX
+			//设置该操作
+				Tree a = newNode( "TRA", op->r, NULL, CVC - 1 + op->r->opType, op->l->opType, op->l->type );
+				//将等于的右侧类型转换为左侧的，可能丢失精度，我不管了
+				op->r = a;
+			}*/
+				
+			return op;
+		}
+		else
+		{
+			yyerror( "左值不可赋值或者右值不合理\n" );
+			return NULL;
+		}
+	}
+	else if (!strcmp( op->name, "OR" ) || !strcmp( op->name, "AND" )) {
+		//我得头快要从脖子上掉下来了
+		// ：（
+		//真假值之间的比较
+		//除非是0
+		//否则都是真
+		//cmp
+		//jne/je assLine+2
+		//cmp
+		//assLine+2:提前打好
+		if (oprand1->type <= 1 && oprand2->type <= 1) {
+			op->l = oprand1;
+			op->r = oprand2;
+			op->type = 0;
+			op->opType = CONST;
+			if (!strcmp( op->name, "OR" )) {
+				//建立两个cmp与jump,如果左边为假（cmp op1 0;jne 下二条语句assLine+2;cmp op2 0 ）
+				op->opPr = NE;
+			}
+			else {
+				//建立两个cmp与一个je,如果左边为真（cmp op1 0;je assLine+2下两条语句（跳过下一句）;cmp op2 0 ）
+				op->opPr = EQ;
+			}
+			Symbol tempSym = lookup( stringd( temp ), identifiers );
+			if (tempSym == NULL) {
+				tempSym = install( stringd( temp ), &identifiers, level );
+				tempSym->offset = identificaionOffset++;
+				tempSym->temporary = 1;
+
+			}
+			else {
+				//当前临时变量可以复用
+				//好像没什么要做的
+			}
+			temp++;
+			maxTemp = (temp > maxTemp) ? temp : maxTemp;
+			op->offset = tempSym->offset;
+			return op;
+		}
+		else {
+			yyerror( "变量未定义\n" );
+		}
+	}
+}
 
 Tree getVarName( Tree name ) {
 	//如果是一个变量
@@ -381,7 +381,10 @@ Tree getVarName( Tree name ) {
 		name->type = 1;
 		name->opPr = NOP;
 		name->opType = find2->type->op;
-		return newNode( "INDIREXP", name, NULL, INDIR, name->opType, 1 );
+		name->offset = find2->offset;
+		Tree indirexp= newNode( "INDIREXP", name, NULL, INDIR, name->opType, 1 );
+		indirexp->offset = name->offset;
+		return indirexp;
 	}
 	else {
 		yyerror( "未定义的变量\n" );

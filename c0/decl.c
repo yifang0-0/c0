@@ -86,13 +86,18 @@ void okayToDec(Tree newsymbol,Type type,Tree value,int ifconst ) {
 	Symbol newsym ;
 	if (ifconst) {
 		newsym = install( newsymbol->idtype, &constants, CONSTANT );identificaionOffset -= 1;
+		strcpy( newsymbol->name, "INDIRNAME" );
 	}
-	else newsym = install( newsymbol->idtype, &identifiers, level);
+	else {
+		newsym = install( newsymbol->idtype, &identifiers, level );
+		strcpy( newsymbol->name, "INDIREXP" );
+		
+	}
 	newsymbol->opType = type->op;
-	newsymbol->opPr=INDIR;
 	newsym-> type= type;
 	newsym->ifconst = ifconst;
 	setNewSymbol( newsym, type );
+	newsymbol->offset = newsym->offset;
 	if(value!=0){
 		newsym->u.c.v = newValue( type->op, value->u, value->opType );
 		newsym->defined = 1;
@@ -141,7 +146,7 @@ int transferAssignDecl(Tree type,Tree Var ) {
 Tree varDec( Tree type, Tree vl, int ifConst ) {
 	Tree varList = vl;
 	
-	if (ifConst) {//可能出现两种情况：常量或非常量
+	if (ifConst==1) {//可能出现两种情况：常量或非常量
 		//varList可能出现的两种情况：varlist，var
 		while (!strcmp( varList->name, "varList" )) {
 
@@ -172,6 +177,7 @@ Tree varDec( Tree type, Tree vl, int ifConst ) {
 						okayToDec( varList->l->l, type->ty, varList->l->r ,ifConst);
 						varList->type = 0;
 						//在这里需要插入一个生成读ebp的东西
+						//此时可以抛弃name
 					}
 					else {
 						yyerror( "变量重复定义！" );
@@ -184,7 +190,9 @@ Tree varDec( Tree type, Tree vl, int ifConst ) {
 				{
 					yyerror( "暂时不支持数组赋值\n" );
 				}
+				varList->l->opType = varList->l->l->opType;
 			}
+			
 			varList = varList->r;
 			if (varList == NULL)break;
 		}
@@ -263,6 +271,7 @@ Tree varDec( Tree type, Tree vl, int ifConst ) {
 						
 					}
 					else yyerror( "暂时不支持数组赋值\n" );
+					varList->l->opType = varList->l->l->opType;
 				}
 				
 				//Tree examErrorNoAssign = varList;
@@ -359,7 +368,11 @@ Tree funcDef(Tree type,Tree name,Tree args,int ifconst,Tree explist ) {
 			if(explist!=NULL){
 				if (!strcmp(name->idtype,"main"))
 				{
-					expGen( explist, 0, midMainUpdate(  newFunc ) );
+					
+						struct mid* main= midMainUpdate( newFunc );
+						struct mid* main2 = main;
+						curMid = main;
+					expGen( explist, 0, main );
 				}
 				else
 					expGen(explist,0 ,  midCurUpdate( name->idtype,newFunc ));

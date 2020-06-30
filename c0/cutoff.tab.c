@@ -2253,5 +2253,6 @@ int main(int ac,char **av)
 	Initial( ) ;
 	//yyrestart("")
     yyparse();
+	generateAsm( );
 }
  

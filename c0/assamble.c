@@ -3,19 +3,20 @@
 //1：开头
 
 void generateAsm( ) {
-	
-	
-	FILE *fpWrite = fopen( "data.txt", "a" );
+	FILE *fpWrite = fopen( "data.txt", "w+" );
 	if (fpWrite == NULL) { 
 		
 		yyerror( "写入文件失败\n" );
 		exit( 0 );
 	}
 	fprintf( fpWrite, "%%include \"io.asm\"\n" );
+	fclose( fpWrite );
+	fpWrite = fopen( "data.txt", "a+" );
 	generateData( fpWrite );
 	generateBss( fpWrite );
+	generateStart( fpWrite );
 	generateMain( fpWrite );
-	
+	fclose( fpWrite );
 
 }
 void generateMain( FILE *fpWrite ) {

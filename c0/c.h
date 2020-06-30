@@ -402,7 +402,7 @@ Tree newNode( const char*name, Tree l, Tree r, int oppr, int opty, int type );
  extern stringList constString;
  stringList getNumber( char* m );
 
-
+ extern struct mid*curMid;
  extern struct mid*cur;
 
  void generateData( FILE *fpWrite );
@@ -420,4 +420,5 @@ Tree newNode( const char*name, Tree l, Tree r, int oppr, int opty, int type );
  void scanMidEqual( FILE * fpWrite );
  void scanMainEqual( Type funcType, struct mid* midEqual, FILE * fpWrite );
  void generateMain( FILE *fpWrite );
+ void generateStart( FILE *fpWrite );
 #endif

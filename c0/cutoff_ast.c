@@ -49,6 +49,8 @@ Tree newast( const char*name, int num, ... ) {
 		// number id type var其中只有var需要有name
 		int t = va_arg( valist, int );
 		//a->line = t;
+		a->opPr = NOP;
+
 
 		if ((!strcmp( a->name, "STRINGNUM" )))// "ID,TYPE,INTEGER，借助union保存yytext的值
 		{
@@ -153,6 +155,9 @@ void eval_print( struct ast*a, int level ) {
 			else if (!strcmp( a->name, "NAME" )) {
 				printf( ":%s ", a->idtype );
 			}
+			else if (!strcmp( a->name, "ADD" )) {
+				printf( "OP:%d ", a->opPr );
+			}
 			else if (!strcmp( a->name, "CNST" )) {
 				if (a->opPr == FLOAT) {
 					printf( " :%f ", a->u.f );
@@ -160,6 +165,7 @@ void eval_print( struct ast*a, int level ) {
 				else if (a->opPr == INT) {
 					printf( " :%d ", a->u.i );
 				}
+				printf( " :%d ", a->idtype );
 			}
 			//printf( "(%d)", a->line );
 			printf( "\n" );
