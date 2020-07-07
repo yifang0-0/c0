@@ -1,5 +1,5 @@
 #include "c.h"
-
+//> int i=3; int b=5;int main(){int i=2;i=i+b;}
 /*
 流程：先打四元式，再generateHead,再优化四元式
 还要处理：label的生成
@@ -582,6 +582,9 @@ struct mid* opMidGen(Tree midOp,int ifeax, struct mid* m ) {
 		 ifeax = cur->ifeax;
 		 resultOffset = cur->resultOffset;
 		 fprintf( fpWrite, ";%s\n", op );
+		 //fpos_t home;
+		// char st[100];
+		 //fgetpos( fpWrite, &home );
 		 if (!strcmp( op, "call" )) {
 			 fprintf( fpWrite, "    call %s\n", op1 );
 			 if (op1Offset > 0)
@@ -765,5 +768,9 @@ struct mid* opMidGen(Tree midOp,int ifeax, struct mid* m ) {
 			 fprintf( fpWrite, "   sub eax,edx\n" );
 		 }
 		 cur = next;
+		 //fsetpos( fpWrite, &home ); /*将文件fp的读写位置设置为上次保存的位置*/
+		 //fgets( st, 100, fpWrite );
+		 //fprintf( fpWrite, "\n" ); /*读取文件第一行*/
+		// puts( st );
 	 }
  }

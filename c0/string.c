@@ -61,7 +61,7 @@ char* stringn( char*str, int len ) {
 	static char*next, *strlimit;
 	if (next + len + 1 >= strlimit) {
 		/* 如果现有地址不够存储str（） */
-		int n = len + 4 * 128;
+ 		int n = len + 4 * 128;
 		if(next!=NULL)
 		next =(char*)realloc( next, n );
 		else next = (char*)malloc( n );

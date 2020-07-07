@@ -82,10 +82,11 @@ void setNewSymbol( Symbol newsym, Type type ) {
 	newsym->type = type;
 	newsym->size = type->size;
 }
-void okayToDec(Tree newsymbol,Type type,Tree value,int ifconst ) {
+void okayToDec(Tree newsymbol,Type type,Tree valueNode,int ifconst ) {
 	Symbol newsym ;
 	if (ifconst) {
-		newsym = install( newsymbol->idtype, &constants, CONSTANT );identificaionOffset -= 1;
+		newsym = install( newsymbol->idtype, &constants, CONSTANT );
+		identificaionOffset -= 1;
 		strcpy( newsymbol->name, "INDIRNAME" );
 	}
 	else {
@@ -98,8 +99,8 @@ void okayToDec(Tree newsymbol,Type type,Tree value,int ifconst ) {
 	newsym->ifconst = ifconst;
 	setNewSymbol( newsym, type );
 	newsymbol->offset = newsym->offset;
-	if(value!=0){
-		newsym->u.c.v = newValue( type->op, value->u, value->opType );
+	if(valueNode !=NULL){	
+		newsym->u.c.v = newValue( type->op, valueNode->u, valueNode->opType );
 		newsym->defined = 1;
 	}
 	else newsym->defined = 0;
@@ -211,7 +212,9 @@ Tree varDec( Tree type, Tree vl, int ifConst ) {
 							//这里的查找与NULL相关，不太对
 							((lookup( newsymbol, constants ) != NULL)
 							||
-							(lookup( newsymbol, identifiers ) != NULL) && lookup( newsymbol, identifiers )->defined != 0
+							(lookup( newsymbol, identifiers ) != NULL) 
+							&& lookup( newsymbol, identifiers )->scope == level 
+							&& lookup( newsymbol, identifiers )->defined != 0
 							)
 							) {
 							yyerror( "声明类型冲突或定义后重复声明\n" );
@@ -261,13 +264,13 @@ Tree varDec( Tree type, Tree vl, int ifConst ) {
 						if (
 							((lookup( newsymbol, constants ) != NULL)
 							||
-							(lookup( newsymbol, identifiers ) != NULL) && lookup( newsymbol, identifiers )->defined != 0
+							(lookup( newsymbol, identifiers ) != NULL) && lookup( newsymbol, identifiers )->scope==level && lookup( newsymbol, identifiers )->defined != 0
 							)
 							) {
 							yyerror( "声明类型冲突或定义后重复声明\n" );
 						}
 						else
-							okayToDec( varList->l->l, type->ty, varList->l->l->r, ifConst );
+							okayToDec( varList->l->l, type->ty, varList->l->r, ifConst );
 						
 					}
 					else yyerror( "暂时不支持数组赋值\n" );

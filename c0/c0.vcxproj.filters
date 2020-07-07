@@ -66,5 +66,6 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="data.txt" />
+    <Text Include="data2.txt" />
   </ItemGroup>
 </Project>

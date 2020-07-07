@@ -1,10 +1,11 @@
-%include "io.asm"
 section .data
+    bdd 5
+    idd 3
 section .bss
-    ?bresd 1/n    ?iresd 1/n_start:
+_start:
     push ebp
     mov ebp,esp
-    sub esp,4
+    sub esp,8
 ;movimm
    mov edx,dword 2
 ;assign
@@ -15,12 +16,12 @@ section .bss
    mov eax,[ebp-0]
 ;movebp
    mov eax,[ebp-0]
-;movimm
-   mov edx,dword 6
+;movname
+   mov edx,b
+;ADD
+   add edx,eax
+   mov [ebp-4],edx
 ;assign
-   mov edx,dword 6
-   mov [ebp-0],edx
-;assign
-   mov edx,[ebp-926365492]
+   mov edx,[ebp-4]
    mov [ebp-0],edx
    mov eax,edx

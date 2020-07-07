@@ -207,42 +207,42 @@ Symbol genident( int scls, Type ty, int lev ) {
 
 	return p;
 }
-void subprintfArrayValue( FILE *fpWrite, int op, struct entry* p ) {
-	 fprintf( fpWrite, "    %s", p->sym.name );
+void subprintfArrayValue( FILE *fpWrite, int op, Symbol p ) {
+	 fprintf( fpWrite, "    %s ", p->name );
 }
-void subprintfValue( FILE *fpWrite, int op, struct entry* p ) {
+void subprintfValue( FILE *fpWrite, int op, Symbol p ) {
 	switch (op) {
-	case CHAR: fprintf( fpWrite, "db /'%c/'/n", p->sym.u.c.v.sc );break;
+	case CHAR: fprintf( fpWrite, "db /'%c/'\n", p->u.c.v.sc );break;
 	case UNSIGNEDCHAR:
-		fprintf( fpWrite, "db %x/n", p->sym.u.c.v.uc );break;
-	case INT: fprintf( fpWrite, "dd %x/n", p->sym.u.c.v.i );break;
-	case UNSIGNED: fprintf( fpWrite, "dd %x/n", p->sym.u.c.v.u );break;
+		fprintf( fpWrite, "db %x\n", p->u.c.v.uc );break;
+	case INT: fprintf( fpWrite, "dd %x\n", p->u.c.v.i );break;
+	case UNSIGNED: fprintf( fpWrite, "dd %x\n", p->u.c.v.u );break;
 	//case ARRAY:  subprintfConstantValue( fpWrite, op,  p )
 	}
 }
 
-void subConstantPrintf( FILE *fpWrite ,int op,struct entry* p) {
-	if(p->sym.defined){
-		fprintf( fpWrite, "    %s", p->sym.name );
+void subConstantPrintf( FILE *fpWrite ,int op,Symbol p) {
+	if(p->defined){//这里要加定义
+		fprintf( fpWrite, "    %s  ", p->name );
 		subprintfValue( fpWrite, op, p );
 	}
 }
-void subIdentifiersPrintf( FILE *fpWrite, int op, struct entry* p ) {
-	if (p->sym.defined==0) {
-		fprintf( fpWrite, "    ?%s", p->sym.name );
+void subIdentifiersPrintf( FILE *fpWrite, int op, Symbol p ) {
+	if (p->defined==0) {
+		fprintf( fpWrite, "    ?%s  ", p->name );
 		switch (op) {
 		case UNSIGNEDCHAR:
-		case CHAR: fprintf( fpWrite, "resb 1/n");break;
+		case CHAR: fprintf( fpWrite, "resb 1\n");break;
 		
 		case INT: 
-		case UNSIGNED: fprintf( fpWrite, "resd 1/n" );break;
+		case UNSIGNED: fprintf( fpWrite, "resd 1\n" );break;
 
-		case ARRAY:switch (p->sym.type->op) {
+		case ARRAY:switch (p->type->op) {
 			case UNSIGNEDCHAR:
-			case CHAR: fprintf( fpWrite, "resb %d/n", p->sym.type->size );break;
+			case CHAR: fprintf( fpWrite, "resb %d\n", p->type->size );break;
 
 			case INT:
-			case UNSIGNED: fprintf( fpWrite, "resd %d/n", p->sym.type->size/4);break;
+			case UNSIGNED: fprintf( fpWrite, "resd %d\n", p->type->size/4);break;
 
 			//case ARRAY:  subprintfConstantValue( fpWrite, op,  p )
 		}
@@ -268,7 +268,7 @@ void printfGlobal( FILE *fpWrite,Table tbb ,int level) {
 		subConstantPrintf( fpWrite, op, p );
 		p = p->up;
 	}
-
+	//因为查找的时候是向后查找，用的是link，但是现在是用的up，一个是用entry一个不是
 }
 void printfidentifiers( FILE *fpWrite, Table tbb, int level ) {
 	Symbol p = allsymbols( tbb );
