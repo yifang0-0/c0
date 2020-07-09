@@ -28,7 +28,7 @@ SUBLEX STARLEX DIVLEX ANDLEX ORLEX BANDLEX BORLEX BXORLEX NOTLEX LP RP LB RB LSB
 %token <a> EOL
 %token <a>  FALSELEX TRUELEX
 //%token <a> StructSpecifire
-%type  <a> Program ExtDefList ExtDef Specifire StructSpecifire UnionSpecifire DefList Def FunDecList fDecList  fDecVar  DecVar 
+%type  <a> Program ExtDefList ExtDef Specifire StructSpecifire UnionSpecifire DefList Def FunDecList FuncHead fDecList  fDecVar  DecVar 
  VarList Var  Compst STATELIST STATE Exp Args  
 
 /*priority*/
@@ -66,13 +66,17 @@ ExtDefList:
 	;
 ExtDef:
 	Specifire SEMI	{$$=newast("ExtDef",2,$1,$2);}
-	|Specifire NAME FunDecList Compst	{$$=funcDef($1,$2,$3,0,$4) ; exitscope( );identificaionOffset=0;}
 	|Specifire VarList SEMI{$$=varDec( $1,$2, 0 );identificaionOffset=0;}
-	|Specifire NAME FunDecList SEMI{$$=funcDef($1,$2,$3,0,NULL);identificaionOffset=0;}
-	|CONSTLEX Specifire NAME FunDecList Compst	{$$=funcDef($1,$2,$3,1,$4); exitscope( );identificaionOffset=0;}
-	|CONSTLEX Specifire VarList SEMI{$$=varDec( $1, $2, 1 );identificaionOffset=0;}
+	|Specifire NAME FunDecList SEMI{$$=funcHeadDef($1,$2,$3,0);identificaionOffset=0;}
+	|FuncHead Compst	{$$=funcDef($1,$2); exitscope( );}
+	|CONSTLEX Specifire VarList SEMI{$$=varDec( $1, $2, 1 );}
 
 	;
+
+FuncHead:
+	CONSTLEX Specifire NAME FunDecList{setZero();$$=funcHeadDef($2,$3,$4,1);}
+	|Specifire NAME FunDecList{setZero();$$=funcHeadDef($1,$2,$3,0);}
+	
 
 	
 	;
@@ -100,8 +104,8 @@ STATE:
 	|DefList {$$=createListL("STATE",$1,NULL);}
 	|RETURN  SEMI {$$=Return($1,NULL);}
 	|RETURN  Exp SEMI {$$=Return($1,$2);}
-	|IF LP Exp RP STATE {$$=ifStatement($5,$3,NULL);}
 	|IF LP Exp RP STATE ELSE STATE {$$=ifStatement($5,$3,$7);}
+	|IF LP Exp RP STATE {$$=ifStatement($5,$3,NULL);}
 	|WHILE LP Exp RP STATE
 	|DO STATE WHILE LP Exp RP SEMI
 	|SWITCH LP NAME RP STATE

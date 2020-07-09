@@ -71,7 +71,9 @@ Tree exprOPDouble( Tree oprand1, Tree oprand2, Tree op ) {
 				Symbol tempSym = lookup( stringd( temp ), identifiers );
 				if (tempSym == NULL) {
 					tempSym = install( stringd( temp ), &identifiers, level );
-					tempSym->offset = identificaionOffset++;
+					temp++;
+					maxTemp = (temp > maxTemp) ? temp : maxTemp;
+					tempSym->offset = identificaionOffset+ temp;
 					tempSym->temporary = 1;
 
 				}
@@ -79,8 +81,7 @@ Tree exprOPDouble( Tree oprand1, Tree oprand2, Tree op ) {
 					//当前临时变量可以复用
 					//好像没什么要做的
 				}
-				temp++;
-				maxTemp = (temp > maxTemp) ? temp : maxTemp;
+				
 				op->offset = tempSym->offset;
 				return op;
 			}
@@ -140,7 +141,9 @@ Tree exprOPDouble( Tree oprand1, Tree oprand2, Tree op ) {
 			Symbol tempSym = lookup( stringd( temp ), identifiers );
 			if (tempSym == NULL) {
 				tempSym = install( stringd( temp ), &identifiers, level );
-				tempSym->offset = identificaionOffset++;
+				
+				tempSym->offset = identificaionOffset+ temp;
+				temp++;
 				tempSym->temporary = 1;
 
 			}
@@ -148,45 +151,11 @@ Tree exprOPDouble( Tree oprand1, Tree oprand2, Tree op ) {
 				//当前临时变量可以复用
 				//好像没什么要做的
 			}
-			temp++;
+			
 			maxTemp = (temp > maxTemp) ? temp : maxTemp;
 			op->offset = tempSym->offset;
 			
 			return op;
-			if (oprand1->opType <= FLOAT && oprand1->opType <= FLOAT)
-			{
-				/*
-				if (oprand1->opType <= FLOAT && oprand1->opType <= FLOAT)
-			{
-				if (oprand1->opType != oprand2->opType) {
-					//如果需要类型转换 建立一个新节点 用来类型转换 孩子节点指向待转换值与目标值，CVXX
-				//设置该操作
-					Tree a = newNode( "TRA", op->l, NULL, CVC - 1 + op->l->opType, op->r->opType, op->l->type );
-					op->l = a;
-				}
-				}*/
-				Symbol tempSym = lookup( stringd( temp ), identifiers );
-				if (tempSym == NULL) {
-					tempSym = install( stringd( temp ), &identifiers, level );
-					tempSym->offset = identificaionOffset++;
-					tempSym->temporary = 1;
-
-				}
-				else {
-					//当前临时变量可以复用
-					//好像没什么要做的
-				}
-				temp++;
-				maxTemp = (temp > maxTemp) ? temp : maxTemp;
-				op->offset = tempSym->offset;
-				return op;
-				
-			}
-			else
-			{
-				yyerror( "" );
-				return NULL;
-			}
 			
 		}
 	}
@@ -209,14 +178,15 @@ Tree exprOPDouble( Tree oprand1, Tree oprand2, Tree op ) {
 			op->opPr = LT; strcpy( op->name, "LT" );
 		}
 		else if (!strcmp( op->idtype, "==" )) {
-			op->opPr = EQ;strcpy( op->name, "EQ" );
+
+			op->opPr = EQ;strcpy( op->name, "reeq" );
 		}
 		else {
 			yyerror( "未知错误\n" );
 		}
 		if (oprand1->type <= 1 && oprand2->type <= 1) {
-			op->r = oprand1->opType < oprand2->opType ? oprand1 : oprand2;
-			op->l = oprand1->opType < oprand2->opType ? oprand2 : oprand1;
+			op->l = oprand1;
+			op->r =  oprand2 ;
 			op->opType = op->l->opType;
 			op->type = 0;//即不能进行赋值操作
 			if (oprand1->opType <= FLOAT && oprand1->opType <= FLOAT)
@@ -232,7 +202,10 @@ Tree exprOPDouble( Tree oprand1, Tree oprand2, Tree op ) {
 			Symbol tempSym = lookup( stringd( temp ), identifiers );
 			if (tempSym == NULL) {
 				tempSym = install( stringd( temp ), &identifiers, level );
-				tempSym->offset = identificaionOffset++;
+				
+				maxTemp = (temp > maxTemp) ? temp : maxTemp;
+				tempSym->offset = identificaionOffset+temp;
+				temp++;
 				tempSym->temporary = 1;
 
 			}
@@ -240,8 +213,7 @@ Tree exprOPDouble( Tree oprand1, Tree oprand2, Tree op ) {
 				//当前临时变量可以复用
 				//好像没什么要做的
 			}
-			temp++;
-			maxTemp = (temp > maxTemp) ? temp : maxTemp;
+			
 			op->offset = tempSym->offset;
 			return op;
 		}
@@ -262,16 +234,12 @@ Tree exprOPDouble( Tree oprand1, Tree oprand2, Tree op ) {
 			Symbol tempSym = lookup( stringd( temp ), identifiers );
 			if (tempSym == NULL) {
 				tempSym = install( stringd( temp ), &identifiers, level );
-				tempSym->offset = identificaionOffset++;
+				temp++;
+				maxTemp = (temp > maxTemp) ? temp : maxTemp;
+				tempSym->offset = identificaionOffset+temp;
 				tempSym->temporary = 1;
 
-			}
-			else {
-				//当前临时变量可以复用
-				//好像没什么要做的
-			}
-			temp++;
-			maxTemp = (temp > maxTemp) ? temp : maxTemp;
+			}			
 			op->offset = tempSym->offset;
 			return op;
 		}
@@ -340,16 +308,14 @@ Tree exprOPDouble( Tree oprand1, Tree oprand2, Tree op ) {
 			Symbol tempSym = lookup( stringd( temp ), identifiers );
 			if (tempSym == NULL) {
 				tempSym = install( stringd( temp ), &identifiers, level );
-				tempSym->offset = identificaionOffset++;
+				
+				maxTemp = (temp > maxTemp) ? temp : maxTemp;
+				tempSym->offset = identificaionOffset+temp;
+				temp++;
 				tempSym->temporary = 1;
 
 			}
-			else {
-				//当前临时变量可以复用
-				//好像没什么要做的
-			}
-			temp++;
-			maxTemp = (temp > maxTemp) ? temp : maxTemp;
+
 			op->offset = tempSym->offset;
 			return op;
 		}
@@ -367,20 +333,26 @@ Tree getVarName( Tree name ) {
 		name->type = 0;
 		name->opPr = NOP;
 		name->opType = find1->type->op;
-		return newNode( "INDIRNAME", name, NULL, INDIR, name->opType, 0 );
+		name->offset = find1->offset;
+		Tree na= newNode( "INDIRNAME", name, NULL, INDIR, name->opType, 0 );
+		na->offset = name->offset;
+		return na;
 	}
 	else if (find2!=NULL&&find2->scope==GLOBAL)
 	{
 		name->type = 0;
 		name->opPr = NOP;
 		name->opType = find2->type->op;
-		return newNode( "INDIRNAME", name, NULL, INDIR, name->opType, 0 );
+		name->offset = find2->offset;
+		Tree na =newNode( "INDIRNAME", name, NULL, INDIR, name->opType, 0 );
+		na->offset = name->offset;
+		return na;
 	}
 	else if (find2 != NULL && find2->scope > GLOBAL)
 	{
 		name->type = 1;
 		name->opPr = NOP;
-		name->opType = find2->type->op;
+		//name->opType = find2->type->op;
 		name->offset = find2->offset;
 		Tree indirexp= newNode( "INDIREXP", name, NULL, INDIR, name->opType, 1 );
 		indirexp->offset = name->offset;
@@ -400,7 +372,7 @@ Tree getFuncName( Tree name, Tree arglist ) {
 	//建立新结点CALL
 	//CALL->l=建立空变量
 	//空变量左侧指向ARG列表
-	Symbol func = lookup( name->idtype, identifiers );
+	Symbol func = lookup( name->idtype, functions);
 	if (func->type->op == FUNCTION) {
 		//当前变量是函数名
 		//创建临时变量 
@@ -409,26 +381,26 @@ Tree getFuncName( Tree name, Tree arglist ) {
 		Tree arfReturn = NULL;
 		if (name->opType != VOID) {
 			arfReturn = newNode( "POPFUNC", NULL, NULL, POP, name->type, 3 );
-			arfReturn->offset = func->type->u.f.funcSize;
+			
 		}
 		//Tree nop= newNode( "funcuse", explist, arfReturn, CALL, name->ty, 2 );
 		Tree addrl = newNode( "CALL", arglist, name, CALL,name->opType, 2 );
 		addrl->intgr = func->type->u.f.args;
+		//while()
 		Tree nop = newNode( "funcuse", addrl, arfReturn, NOP, name->opType, 2 );
 		Symbol tempSym = lookup( stringd( temp ), identifiers );
 		if (tempSym == NULL) {
 			tempSym = install( stringd( temp ), &identifiers, level );
-			tempSym->offset = identificaionOffset++;
+			maxTemp = (temp > maxTemp) ? temp : maxTemp;
+			tempSym->offset = identificaionOffset+temp;
+			temp++;
 			tempSym->temporary = 1;
+		}
+		nop->offset = tempSym->offset;
+		if (name->opType != VOID) {
+			arfReturn->offset = tempSym->offset;
 
 		}
-		else {
-			//当前临时变量可以复用
-			//好像没什么要做的
-		}
-		temp++;
-		maxTemp = (temp > maxTemp) ? temp : maxTemp;
-		nop->offset = tempSym->offset;
 		return nop;
 	}
 	//return nop;

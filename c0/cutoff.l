@@ -61,7 +61,7 @@ SPACE [ \t\r]*
 "]"	{yylval.a=newast("RSB",0,yylineno); return RSB;}
 
 
-
+"\n"
 " "
 [A-Za-z][A-Za-z0-9]* {yylval.a=newast("NAME",0,yylineno);
 							return NAME;}

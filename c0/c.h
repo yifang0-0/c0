@@ -150,6 +150,7 @@ extern Table constants;
 extern Table externals;
 extern Table globals;
 extern Table identifiers;
+extern Table functions;
 extern Table labels;
 extern Table types;
 extern int level;
@@ -309,10 +310,11 @@ Tree varDec( Tree type, Tree vl, int ifConst );
 Symbol findIfExist( Tree var, Tree type, int ifconst );
 void okayToDec( Tree newsymbol, Type type, Tree value, int ifconst );
 void setNewSymbol( Symbol newsym, Type type );
-Tree funcDef( Tree type, Tree name, Tree args, int ifconst, Tree explist );
+Tree funcDef( Tree funcdec, Tree explist );
+Tree funcHeadDef( Tree type, Tree name, Tree args, int ifconst );
 Tree changeToUnsigned( Tree oldType );
 
-
+void setZero( );
 Tree createList( const char * name, Tree l, Tree r );
 Tree createListL( const char * name, Tree l, Tree r );
 Tree setArgs( Tree exp, Tree explist );
@@ -413,7 +415,7 @@ Tree newNode( const char*name, Tree l, Tree r, int oppr, int opty, int type );
  void printfString( FILE *fpWrite );
 
  void generateFuncHead( FILE *fpWrite, int offset );
-
+// void generateOtherFunc( FILE *fpWrite );
  struct mid* midCurUpdate( char* funcName, Type funcType);
  void midAllInitial( );
  struct mid* midMainUpdate( Type funcType );

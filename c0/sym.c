@@ -17,8 +17,10 @@ static struct table
 cns = { CONSTANT },
 ext = { GLOBAL },
 ids = { GLOBAL },
+fun = { GLOBAL },
 tys = { GLOBAL };
 Table constants = &cns;
+Table functions = &fun;
 Table externals = &ext;
 Table identifiers = &ids;
 //Table globals = &ids;

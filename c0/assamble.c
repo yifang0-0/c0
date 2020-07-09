@@ -16,9 +16,17 @@ void generateAsm( ) {
 	generateBss( fpWrite );
 	generateStart( fpWrite );
 	generateMain( fpWrite );
+	//generateOtherFunc( fpWrite );
 	fclose( fpWrite );
 
 }
+/*
+void generateOtherFunc( FILE *fpWrite ) {
+	while()
+	scanMidEqual( fpWrite );
+}
+*/
+
 void generateMain( FILE *fpWrite ) {
 	scanMidEqual( fpWrite );
 }
@@ -43,7 +51,8 @@ void generateData( FILE *fpWrite ) {
 
 }
 void generateStart( FILE *fpWrite ) {
-	fprintf( fpWrite, "_start:\n" );
+	fprintf( fpWrite, "section .text\n" );
+	//fprintf( fpWrite, "_start:\n" );
 
 }
 

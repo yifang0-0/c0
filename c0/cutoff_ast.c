@@ -105,6 +105,10 @@ Tree newast( const char*name, int num, ... ) {
 				yyerror( "该类型暂未实现\n" );
 			}
 		}
+		else if (!strcmp( a->name, "RELOP" )) {
+			a->idtype = (char*)malloc( (1 + strlen( yytext )) );
+			strcpy( a->idtype, yytext );
+		}
 
 	}
 	va_end( valist );

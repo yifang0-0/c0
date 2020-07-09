@@ -104,6 +104,7 @@ void okayToDec(Tree newsymbol,Type type,Tree valueNode,int ifconst ) {
 		newsym->defined = 1;
 	}
 	else newsym->defined = 0;
+	newsymbol->r->opPr = NOP;
 	identificaionOffset +=1;
 }
 
@@ -285,8 +286,8 @@ Tree varDec( Tree type, Tree vl, int ifConst ) {
 	return newNode( "DEC", type, vl,NOP, type->ty->op, ifConst );
 }
 
-Symbol findIfExist( Tree var,Tree type ,int ifconst) {
-	if(!strcmp(var->name,"Var")){
+Symbol findIfExist( Tree type,Tree var ,int ifconst) {
+	if(!strcmp(var->name,"NAME")){
 		Symbol p = lookup( var->idtype, identifiers );
 		if (!p || (p&&p->scope < level)) {
 			p = install( var->idtype, &identifiers, level );
@@ -322,67 +323,78 @@ Symbol findIfExist( Tree var,Tree type ,int ifconst) {
 	}
 	
 }
+Tree funcHeadDef( Tree type, Tree name, Tree args, int ifconst ) {
 
-Tree funcDef(Tree type,Tree name,Tree args,int ifconst,Tree explist ) {
-	//画个树的图
-	//进入函数level+1
-	
 	Tree aftReturn = NULL;
 
 	//检查是否存在
-	if (lookup( name->idtype, identifiers ) && (lookup( name->idtype, identifiers )->defined == 1)) {
+	if (lookup( name->idtype, functions ) && (lookup( name->idtype, functions )->defined == 1)) {
 		yyerror( "函数定义已存在\n" );
 	}
 	//如果函数未被定义且此时为函数定义
+
+	Type *proto;
+	int size = 0;
+	Tree fundec = args;
+	int i = 0;//计算参数的个数
+		while (fundec != NULL&&(!strcmp( fundec->name, "funcDecList" ) || !strcmp( fundec->name, "funcDec" ))) {
+			i += 1;
+			fundec = fundec->r;
+		}
 	
-		Type *proto;
-		int size = 0;
-		Tree fundec = args;
-		int i = 0;//计算参数的个数
-		if (fundec != NULL) {
-			while (!strcmp( fundec->name, "funcDecList" ) || !strcmp( fundec->name, "funcDec" )) {
-				i += 1;
-				fundec = fundec->r;
-			}
-		}
-		fundec = args;
-		proto = (Type*)malloc( i * sizeof( Type ) );
-		proto[i] = NULL;//函数末尾为0
-		for (int n = 0;n < i;n++) {
-			Symbol cur = findIfExist( fundec->l->l->l, fundec->l->l->r, fundec->l->l->type );
-			proto[n] = cur->type;
-			proto[n]->u.sym = cur;
-			if (cur->ifconst)
-				proto[n]->op = CONST;
-		}
-			//此处可以省略size,因为offsize在install中更新
-			Type newFunc = func( type->ty, proto );
-			newFunc->u.f.funcSize = identificaionOffset;
-			newFunc->u.f.args = i;
-			install( name->idtype, &identifiers, GLOBAL );
-			lookup( name->idtype, identifiers )->type = newFunc;
-			if (type->ty->op != VOID) {
-				aftReturn = newNode( "PUSH", NULL, NULL, PUSH, name->type, 3 );
-			}
-			Tree nop = newNode( "nop", args, explist, NOP, name->opType, 2 );
-			Tree addrl=newNode( "function", nop, aftReturn, NOP, name->opType, 2 );
-			/*
-			制造四元式！*/
-			if(explist!=NULL){
-				if (!strcmp(name->idtype,"main"))
-				{
+	fundec = args;
+	proto = (Type*)malloc( i * sizeof( Type ) );
+	proto[i] = NULL;//函数末尾为0
+	
+	for (int n = 0;n < i;n++) {
+		Symbol cur = findIfExist( fundec->l->l, fundec->l->r, fundec->l->l->type );
+		proto[n] = cur->type;
+		proto[n]->u.sym = cur;
+		if (cur->ifconst)
+			proto[n]->u.sym->ifconst= 1;
+	}
+	level -= 1;
+	//此处可以省略size,因为offsize在install中更新
+	Type newFunc = func( type->ty, proto );
+	//newFunc->u.f.funcSize = identificaionOffset+maxTemp;
+	newFunc->u.f.args = i;
+	install( name->idtype, &functions, GLOBAL );
+	lookup( name->idtype, functions )->type = newFunc;
+	level += 1;
+	if (type->ty->op != VOID) {
+		aftReturn = newNode( "ret", NULL, NULL, PUSH, name->type, 3 );
+	}
+	Tree nop = newNode( "nop", args, NULL, NOP, name->opType, 2 );
+	Tree addrl = newNode( "function", nop, aftReturn, NOP, name->opType, 2 );
+	addrl->idtype = name->idtype;
+	return addrl;
+}
+Tree funcDef(Tree funcdec,Tree explist ) {
+		/*
+		制造四元式！*/
+	char* name = funcdec->idtype;
+	Type newFunc = lookup( name, functions )->type;
+	funcdec->l->r = explist;
+	newFunc->u.f.funcSize = identificaionOffset + maxTemp;
+		if(explist!=NULL){
+			if (!strcmp(name,"main"))
+			{
 					
-						struct mid* main= midMainUpdate( newFunc );
-						struct mid* main2 = main;
-						curMid = main;
-					expGen( explist, 0, main );
-				}
-				else
-					expGen(explist,0 ,  midCurUpdate( name->idtype,newFunc ));
-				printf( "生成%s的四元式\n", name->idtype );
+					struct mid* main= midMainUpdate( newFunc );
+					//struct mid* main2 = main;
+					curMid = main;
+				expGen( explist, 0, main );
+			}
+			else {
+				struct mid* otherFunc=midCurUpdate( name, newFunc );
+				curMid = otherFunc;
+				expGen( explist, 0,otherFunc );
 			}
 			
-			return addrl;
+			printf( "生成%s的四元式\n", name );
+		}
+			
+			return funcdec;
 
 }
 

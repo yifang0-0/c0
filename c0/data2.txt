@@ -1,27 +1,60 @@
 section .data
-    bdd 5
-    idd 3
+    b  dd 5
 section .bss
-_start:
+section .text
+main:
     push ebp
     mov ebp,esp
-    sub esp,8
+    sub esp,12
+;movebp
+   mov eax,[ebp-4]
+;movimm
+   mov eax,dword 1
 ;movimm
    mov edx,dword 2
-;assign
-   mov edx,dword 2
-   mov [ebp-0],edx
-   mov eax,edx
-;movebp
-   mov eax,[ebp-0]
-;movebp
-   mov eax,[ebp-0]
-;movname
-   mov edx,b
 ;ADD
    add edx,eax
-   mov [ebp-4],edx
+   mov [ebp-8],edx
 ;assign
-   mov edx,[ebp-4]
-   mov [ebp-0],edx
+   mov edx,[ebp-8]
+   mov [ebp-4],edx
    mov eax,edx
+;movebp
+   mov eax,[ebp-4]
+;movimm
+   mov edx,dword 3
+;SUB
+   sub eax,edx
+   mov [ebp-8],eax
+;EQ
+   cmp [ebp-8],dword 0
+   je .label_0
+;movebp
+   mov eax,[ebp-4]
+;movebp
+   mov eax,[ebp-4]
+;movimm
+   mov edx,dword 10
+;ADD
+   add edx,eax
+   mov [ebp-8],edx
+;assign
+   mov edx,[ebp-8]
+   mov [ebp-4],edx
+   mov eax,edx
+;label
+    .label_0
+;movebp
+   mov eax,[ebp-4]
+;movebp
+   mov eax,[ebp-4]
+;movimm
+   mov edx,dword 2
+;ADD
+   add edx,eax
+   mov [ebp-8],edx
+;assign
+   mov edx,[ebp-8]
+   mov [ebp-4],edx
+   mov eax,edx
+ret

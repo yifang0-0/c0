@@ -17,6 +17,7 @@ Tree createListL( const char* name, Tree l, Tree r ) {
 
 Tree setArgs( Tree exp, Tree explist ) {
 	Tree Arg = newNode( "ARG", explist, exp, ARG, exp->opType, exp->type );
+	
 	return Arg;
 }
 /*
@@ -36,7 +37,7 @@ Tree ifStatement(Tree state1,Tree exp,Tree state2 ) {
 	int lab=label;
 	genlabel( 1 );
 	Tree jequal=newNode( "CMP", exp, NULL, EQ, 0, 0 );
-	jequal->intgr = lab;
+	jequal->intgr = lab;//表达式正确不跳 不正确跳到label camp eax,0 je 相等（是零）跳转
 	Tree label1 = NULL;
 	Tree label2 = NULL;
 	Tree gotoLabe2 = NULL;
@@ -48,7 +49,8 @@ Tree ifStatement(Tree state1,Tree exp,Tree state2 ) {
 		gotoLabe2->intgr = lab;
 	}
 	label1=newNode( "LABEL", state1,gotoLabe2 , LABEL, 0, 0 );
-	label1->intgr = lab;
+	label1->intgr = jequal->intgr;
+	//jequal->intgr = lab;
 	Tree nop=newNode( "brench", label1, label2, NOP, 0, 0 );
 	return newNode( "IF", jequal, nop, NOP, 0, 0 );
 }
